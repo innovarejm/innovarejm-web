@@ -282,25 +282,9 @@ function Hero({ onSearch }) {
 
       <div className="wrap" style={{ position: "relative", zIndex: 2, paddingTop: 90, textAlign: "center" }}>
 
-        {/* Pill de ubicación */}
-        <div className="hero-rise" style={{ animationDelay: ".05s" }}>
-          <span style={{
-            display: "inline-flex", alignItems: "center", gap: 9,
-            fontFamily: "var(--mono)", fontSize: 10.5,
-            letterSpacing: ".26em", textTransform: "uppercase",
-            color: "rgba(255,255,255,.86)",
-            border: "1px solid rgba(255,255,255,.2)",
-            borderRadius: 99, padding: "9px 20px",
-            background: "rgba(255,255,255,.07)",
-            backdropFilter: "blur(10px)",
-          }}>
-            <Icon name="pin" size={12} /> Cartagena · Santa Marta
-          </span>
-        </div>
-
         {/* Titular editorial escalonado */}
         <h1 className="hero-rise" style={{
-          animationDelay: ".16s",
+          animationDelay: ".1s",
           textAlign: "center", marginTop: 26,
           textShadow: "0 6px 50px rgba(3,15,40,.6)",
         }}>
