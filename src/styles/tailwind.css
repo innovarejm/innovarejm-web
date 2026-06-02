@@ -1,0 +1,18 @@
+@import "tailwindcss";
+
+@theme {
+  --color-cyan: #2BA8E0;
+  --color-cyan-soft: #6cc6ee;
+  --color-blue: #1577C2;
+  --color-blue-deep: #0A5BAE;
+  --color-navy: #0c2638;
+  --color-ink: #14181d;
+  --color-ink-2: #3c444c;
+  --color-muted: #6b747c;
+  --color-paper: #fbfcfd;
+  --color-paper-2: #f3f6f8;
+
+  --font-sans: "Hanken Grotesk", system-ui, sans-serif;
+  --font-serif: "Newsreader", Georgia, serif;
+  --font-mono: "Space Mono", ui-monospace, monospace;
+}
