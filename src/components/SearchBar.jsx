@@ -113,10 +113,19 @@ export function SearchBar({ variant = "hero", onSearch, initial }) {
       <style>{`
         @keyframes popIn { from{ opacity:0; transform:translateY(-8px) scale(.98);} to{opacity:1;transform:none;} }
         @media (max-width: 760px){
-          .searchbar{ flex-wrap:wrap; border-radius:26px; }
+          .searchbar{ flex-wrap:wrap; border-radius:22px; padding:4px; gap:0; }
           .searchbar > div{ flex:1 1 45% !important; }
           .searchbar .search-label{ display:inline; }
           .sb-divider{ display:none; }
+        }
+        @media (max-width: 760px){
+          .searchbar > div > button{ padding: 11px 16px !important; }
+        }
+        @media (max-width: 480px){
+          .searchbar{ border-radius:18px; }
+          .searchbar > div{ flex:1 1 100% !important; }
+          .searchbar > div > button{ padding: 10px 14px !important; border-bottom: 1px solid var(--line); }
+          .searchbar > .btn{ width:100%; justify-content:center; margin:4px 0 0; border-radius:14px !important; }
         }
       `}</style>
     </div>
