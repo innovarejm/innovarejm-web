@@ -111,21 +111,47 @@ export function SearchBar({ variant = "hero", onSearch, initial }) {
       </button>
 
       <style>{`
-        @keyframes popIn { from{ opacity:0; transform:translateY(-8px) scale(.98);} to{opacity:1;transform:none;} }
+        @keyframes popIn { from{opacity:0;transform:translateY(-8px) scale(.98);}to{opacity:1;transform:none;} }
+
+        /* ── Tablet: grilla 2×2 compacta ── */
         @media (max-width: 760px){
-          .searchbar{ flex-wrap:wrap; border-radius:22px; padding:4px; gap:0; }
-          .searchbar > div{ flex:1 1 45% !important; }
-          .searchbar .search-label{ display:inline; }
-          .sb-divider{ display:none; }
+          /* !important pisa el border-radius:999 y padding:6 inline */
+          .searchbar {
+            flex-wrap: wrap !important;
+            border-radius: 22px !important;
+            padding: 4px !important;
+            gap: 0 !important;
+          }
+          .searchbar > div {
+            flex: 1 1 44% !important;
+            min-width: 0 !important;
+          }
+          .searchbar > div > button {
+            padding: 11px 14px !important;
+          }
+          .sb-divider { display:none; }
+          /* Botón Buscar: fila completa al pie */
+          .searchbar > button.btn {
+            flex: 1 1 auto !important;
+            width: calc(100% - 8px) !important;
+            margin: 3px 4px 3px !important;
+            border-radius: 16px !important;
+            height: 46px !important;
+            justify-content: center;
+          }
         }
-        @media (max-width: 760px){
-          .searchbar > div > button{ padding: 11px 16px !important; }
-        }
-        @media (max-width: 480px){
-          .searchbar{ border-radius:18px; }
-          .searchbar > div{ flex:1 1 100% !important; }
-          .searchbar > div > button{ padding: 10px 14px !important; border-bottom: 1px solid var(--line); }
-          .searchbar > .btn{ width:100%; justify-content:center; margin:4px 0 0; border-radius:14px !important; }
+
+        /* ── Móvil pequeño (< 420px): más compacto ── */
+        @media (max-width: 420px){
+          .searchbar > div > button {
+            padding: 9px 12px !important;
+          }
+          .searchbar > div > button > div:first-child {
+            font-size: 10px !important;
+          }
+          .searchbar > div > button > div:last-child {
+            font-size: 13px !important;
+          }
         }
       `}</style>
     </div>
