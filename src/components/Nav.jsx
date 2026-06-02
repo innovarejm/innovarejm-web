@@ -52,7 +52,7 @@ export function Nav({ navigate, route, transparentTop = false }) {
         </nav>
 
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-          <a className="btn" href={waLink("Hola INNOVARE JM, quiero información sobre disponibilidad.")} target="_blank" rel="noopener"
+          <a className="btn nav-wa-btn" href={waLink("Hola INNOVARE JM, quiero información sobre disponibilidad.")} target="_blank" rel="noopener"
             style={{
               padding: "11px 20px", fontSize: 14.5,
               border: light ? "1px solid rgba(255,255,255,.5)" : "1.5px solid var(--line-strong)",
@@ -89,6 +89,7 @@ export function Nav({ navigate, route, transparentTop = false }) {
         @media (max-width: 880px){
           .nav-links{ display:none !important; }
           .nav-burger{ display:flex !important; }
+          .nav-wa-btn{ display:none !important; }
         }
         @media (min-width: 881px){ .mobile-menu{ display:none; } }
       `}</style>

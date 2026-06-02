@@ -510,10 +510,16 @@ function PropertyCard({ p, navigate, index = 0 }) {
 function FloatingWA() {
   const [visible, setVisible] = useState(false);
   useEffect(() => {
-    const threshold = window.innerHeight * 0.8;
-    const on = () => setVisible(window.scrollY > threshold);
-    window.addEventListener("scroll", on, { passive: true });
-    return () => window.removeEventListener("scroll", on);
+    // En móvil (sin botón en nav) siempre visible; en desktop aparece tras scroll
+    const isMobile = () => window.innerWidth <= 880;
+    const check = () => setVisible(isMobile() || window.scrollY > window.innerHeight * 0.8);
+    check();
+    window.addEventListener("scroll", check, { passive: true });
+    window.addEventListener("resize", check, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", check);
+      window.removeEventListener("resize", check);
+    };
   }, []);
 
   if (!visible) return null;
