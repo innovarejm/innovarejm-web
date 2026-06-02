@@ -6,19 +6,78 @@ import { fmtFecha } from '../utils/helpers';
 
 function Popover({ open, onClose, children, align = "left", width = 340 }) {
   const ref = useRef(null);
+
   useEffect(() => {
     if (!open) return;
     const on = (e) => { if (ref.current && !ref.current.contains(e.target)) onClose(); };
     document.addEventListener("mousedown", on);
-    return () => document.removeEventListener("mousedown", on);
+    // Bloquea scroll del body cuando está abierto en móvil
+    document.body.style.overflow = window.innerWidth <= 760 ? "hidden" : "";
+    return () => {
+      document.removeEventListener("mousedown", on);
+      document.body.style.overflow = "";
+    };
   }, [open, onClose]);
+
   if (!open) return null;
   return (
-    <div ref={ref} style={{
-      position: "absolute", top: "calc(100% + 14px)", [align]: 0, width, zIndex: 60,
-      background: "#fff", borderRadius: 22, boxShadow: "var(--sh-lg)", border: "1px solid var(--line)",
-      padding: 20, animation: "popIn .22s var(--ease-out)",
-    }}>{children}</div>
+    <>
+      {/* Fondo oscuro solo en móvil */}
+      <div className="popover-backdrop" onClick={onClose} />
+
+      {/* Panel: dropdown en desktop, bottom sheet en móvil */}
+      <div ref={ref} className="popover-panel" style={{
+        position: "absolute", top: "calc(100% + 14px)", [align]: 0, width, zIndex: 62,
+        background: "#fff", borderRadius: 22, boxShadow: "var(--sh-lg)",
+        border: "1px solid var(--line)", padding: 20,
+        animation: "popIn .22s var(--ease-out)",
+      }}>
+        {/* Asa del bottom sheet (solo móvil) */}
+        <div className="sheet-handle" />
+        {children}
+      </div>
+
+      <style>{`
+        .popover-backdrop { display: none; }
+
+        @media (max-width: 760px) {
+          /* Fondo oscuro semitransparente */
+          .popover-backdrop {
+            display: block;
+            position: fixed; inset: 0; z-index: 61;
+            background: rgba(8, 24, 48, .45);
+            animation: fadeIn .2s ease;
+          }
+          @keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
+
+          /* Bottom sheet */
+          .popover-panel {
+            position: fixed !important;
+            left: 0 !important;
+            right: 0 !important;
+            top: auto !important;
+            bottom: 0 !important;
+            width: 100% !important;
+            max-height: 82vh !important;
+            overflow-y: auto !important;
+            border-radius: 24px 24px 0 0 !important;
+            padding: 8px 20px 32px !important;
+            animation: sheetUp .3s cubic-bezier(.16,1,.3,1) !important;
+          }
+          @keyframes sheetUp {
+            from { transform: translateY(100%); }
+            to   { transform: translateY(0); }
+          }
+
+          /* Asa visual del sheet */
+          .sheet-handle {
+            width: 40px; height: 4px; border-radius: 99px;
+            background: var(--line-strong);
+            margin: 8px auto 16px;
+          }
+        }
+      `}</style>
+    </>
   );
 }
 
