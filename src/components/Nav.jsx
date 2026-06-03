@@ -39,11 +39,13 @@ export function Nav({ navigate, route, transparentTop = false }) {
 
         <nav style={{ display: "flex", alignItems: "center", gap: 4 }} className="nav-links">
           {links.map(l => (
-            <button key={l.t} onClick={l.go} style={{
-              fontSize: 14.5, fontWeight: 500, padding: "9px 15px", borderRadius: 99,
-              color: light ? "rgba(255,255,255,.92)" : "var(--ink-2)",
-              transition: "background .2s, color .2s",
-            }}
+            <button key={l.t} onClick={l.go}
+              className="nav-link"
+              style={{
+                fontSize: 14.5, fontWeight: 500, padding: "9px 15px", borderRadius: 99,
+                color: light ? "rgba(255,255,255,.92)" : "var(--ink-2)",
+                transition: "background .2s, color .2s",
+              }}
               onMouseEnter={e => e.currentTarget.style.background = light ? "rgba(255,255,255,.14)" : "var(--paper-2)"}
               onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
               {l.t}

@@ -4,7 +4,8 @@ import { Placeholder } from '../components/Placeholder';
 import { PropImage } from '../components/PropImage';
 import { SearchBar } from '../components/SearchBar';
 import { useReveal } from '../hooks/useReveal';
-import { PROPERTIES, waLink } from '../data/properties';
+import { useCountUp } from '../hooks/useCountUp';
+import { PROPERTIES, AMENIDADES, waLink } from '../data/properties';
 import { formatCOP } from '../utils/helpers';
 
 /* ============================================================
@@ -392,18 +393,39 @@ function Hero({ onSearch }) {
 function PropertyCard({ p, navigate, index = 0 }) {
   const [fav, setFav] = useState(false);
   const [img, setImg] = useState(0);
+  const [ratingVal, ratingRef] = useCountUp(p.rating, 1200, 2);
 
   return (
     <article className="reveal" style={{ transitionDelay: (index * 90) + "ms" }}>
       <div onClick={() => navigate({ name: "property", id: p.id })} style={{ cursor: "pointer" }}>
 
-        {/* Imagen / placeholder */}
+        {/* Imagen con crossfade al cambiar foto */}
         <div style={{ position: "relative", borderRadius: 20, overflow: "hidden", aspectRatio: "1.04" }} className="card-media">
-          <PropImage src={p.galeria[img]} alt={`${p.nombre} - foto ${img + 1}`} />
+
+          {/* key={img} fuerza remount → fade-in + ligero zoom */}
+          <div key={img} style={{ position: "absolute", inset: 0, animation: "imgFadeIn .38s ease" }}>
+            <PropImage src={p.galeria[img]} alt={`${p.nombre} - foto ${img + 1}`} />
+          </div>
+
+          {/* Overlay de amenidades — aparece al hover */}
+          <div className="card-overlay">
+            <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+              {p.amenities.slice(0, 3).map(a => (
+                <span key={a} style={{
+                  fontSize: 11, fontWeight: 600, color: "#fff",
+                  display: "inline-flex", gap: 5, alignItems: "center",
+                  background: "rgba(255,255,255,.15)", backdropFilter: "blur(4px)",
+                  padding: "4px 10px", borderRadius: 99,
+                }}>
+                  <Icon name={AMENIDADES[a].icon} size={12} /> {AMENIDADES[a].label}
+                </span>
+              ))}
+            </div>
+          </div>
 
           {p.destacado && (
             <span style={{
-              position: "absolute", top: 14, left: 14, zIndex: 2,
+              position: "absolute", top: 14, left: 14, zIndex: 4,
               fontSize: 11.5, fontWeight: 700, letterSpacing: ".04em",
               padding: "6px 13px", borderRadius: 99,
               background: "rgba(255,255,255,.94)", color: "var(--blue-deep)",
@@ -415,18 +437,18 @@ function PropertyCard({ p, navigate, index = 0 }) {
             </span>
           )}
 
-          {/* Corazón / favorito */}
+          {/* Corazón */}
           <button
             onClick={e => { e.stopPropagation(); setFav(f => !f); }}
             style={{
-              position: "absolute", top: 12, right: 12, zIndex: 2,
+              position: "absolute", top: 12, right: 12, zIndex: 4,
               width: 38, height: 38, borderRadius: 99,
               display: "grid", placeItems: "center", color: "#fff",
               background: fav ? "var(--cyan)" : "rgba(12,38,56,.28)",
               backdropFilter: "blur(4px)",
               transition: "transform .2s, background .2s",
             }}
-            onMouseDown={e => e.currentTarget.style.transform = "scale(.85)"}
+            onMouseDown={e => e.currentTarget.style.transform = "scale(.82)"}
             onMouseUp={e => e.currentTarget.style.transform = "scale(1)"}
           >
             <Icon name="heart" size={19} style={{ fill: fav ? "#fff" : "none" }} />
@@ -435,7 +457,7 @@ function PropertyCard({ p, navigate, index = 0 }) {
           {/* Indicadores de galería */}
           <div style={{
             position: "absolute", bottom: 12, left: 0, right: 0,
-            display: "flex", justifyContent: "center", gap: 6, zIndex: 2,
+            display: "flex", justifyContent: "center", gap: 6, zIndex: 4,
           }}>
             {p.galeria.slice(0, 5).map((_, i) => (
               <button key={i} onClick={e => { e.stopPropagation(); setImg(i); }} style={{
@@ -452,10 +474,10 @@ function PropertyCard({ p, navigate, index = 0 }) {
         <div style={{ paddingTop: 14 }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 10 }}>
             <h3 style={{ fontSize: 16.5, fontWeight: 700, lineHeight: 1.2 }}>{p.nombre}</h3>
-            {/* Estrella dorada */}
-            <span style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 13.5, fontWeight: 600, flexShrink: 0, marginTop: 1 }}>
+            {/* Rating con contador animado */}
+            <span ref={ratingRef} style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 13.5, fontWeight: 600, flexShrink: 0, marginTop: 1 }}>
               <Icon name="star" size={13} style={{ fill: "oklch(0.78 0.09 75)", stroke: "oklch(0.78 0.09 75)", strokeWidth: 0 }} />
-              {p.rating}
+              {ratingVal.toFixed(2)}
             </span>
           </div>
           <p style={{ color: "var(--muted)", fontSize: 14, marginTop: 5 }}>
@@ -464,7 +486,6 @@ function PropertyCard({ p, navigate, index = 0 }) {
           <p style={{ color: "var(--muted)", fontSize: 14 }}>
             {p.hab} hab · {p.banos} baños · {p.huespedes} huésp.
           </p>
-          {/* Precio con tipografía de marca */}
           <p style={{ marginTop: 10, fontSize: 14.5, display: "flex", alignItems: "baseline", gap: 5 }}>
             <span style={{ fontFamily: "var(--serif)", fontStyle: "italic", fontSize: 13.5, color: "var(--muted)" }}>desde</span>
             <strong style={{ fontSize: 17, fontFamily: "var(--mono)", letterSpacing: "-.01em" }}>
@@ -477,11 +498,11 @@ function PropertyCard({ p, navigate, index = 0 }) {
 
       <style>{`
         article .card-media {
-          transition: transform .4s var(--ease), box-shadow .4s var(--ease);
+          transition: transform .42s var(--ease), box-shadow .42s var(--ease);
         }
         @media (hover: hover) {
           article:hover .card-media {
-            transform: translateY(-5px);
+            transform: translateY(-6px);
             box-shadow: var(--sh-lg);
           }
         }
@@ -515,6 +536,7 @@ function FloatingWA() {
         href={waLink("Hola INNOVARE JM 👋")}
         target="_blank" rel="noopener"
         aria-label="Contactar por WhatsApp"
+        className="floating-wa"
         style={{
           position: "fixed", bottom: 28, right: 28, zIndex: 90,
           width: 58, height: 58, borderRadius: 99,
@@ -607,7 +629,7 @@ export function Home({ navigate, search }) {
               Dos joyas del Caribe
             </h2>
           </div>
-          <div className="reveal dest-grid">
+          <div className="reveal-scale dest-grid">
             {[
               { c: "Cartagena",   d: "El Laguito · frente a la bahía", n: 2, label: "Skyline de Cartagena" },
               { c: "Santa Marta", d: "Donde la sierra abraza el mar",   n: 1, label: "Bahía de Santa Marta" },
@@ -692,7 +714,7 @@ export function Home({ navigate, search }) {
                 { n: "03", ic: "sea",     t: "Vista garantizada", d: "Todos nuestros apartamentos miran directo al mar Caribe." },
                 { n: "04", ic: "sparkle", t: "Listos para vivir", d: "Totalmente amoblados y equipados. Llega con tu maleta y nada más." },
               ].map((x, i) => (
-                <div key={x.t} className="reveal exp-item" style={{ transitionDelay: (i * 80) + "ms" }}>
+                <div key={x.t} className="reveal-left exp-item" style={{ transitionDelay: (i * 100) + "ms" }}>
                   <span className="exp-num">{x.n}</span>
                   <div className="exp-body">
                     <h3 style={{ fontSize: 19, fontWeight: 700, marginBottom: 8 }}>{x.t}</h3>
@@ -750,7 +772,7 @@ export function Home({ navigate, search }) {
 
       {/* ─── CONTACTO / CTA ─── */}
       <section id="contacto" style={{ paddingBlock: 96 }}>
-        <div className="wrap-tight reveal">
+        <div className="wrap-tight reveal-scale">
           <div style={{
             position: "relative", borderRadius: 28, overflow: "hidden",
             padding: "clamp(44px,6vw,80px)",

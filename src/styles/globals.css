@@ -239,3 +239,118 @@ html, body { overflow-x: hidden; max-width: 100vw; }
   0%, 100% { box-shadow: 0 0 0 0 rgba(43,168,224,.3); }
   50%      { box-shadow: 0 0 0 8px rgba(43,168,224,0); }
 }
+
+/* ============================================================
+   MOTION — Micro-interacciones y animaciones de marca
+   ============================================================ */
+
+/* ── 1. Shimmer en botones primarios ── */
+.btn-primary { position: relative; overflow: hidden; }
+.btn-primary::after {
+  content: "";
+  position: absolute; top: 0; left: -80%; width: 45%; height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,.22), transparent);
+  transform: skewX(-22deg);
+  animation: btnShimmer 4.5s ease-in-out infinite;
+  pointer-events: none;
+}
+@keyframes btnShimmer {
+  0%       { left: -80%; opacity: 1; }
+  40%, 100% { left: 150%; opacity: 0; }
+}
+
+/* ── 2. WhatsApp floating — pulse ring ── */
+.floating-wa { position: relative; }
+.floating-wa::before {
+  content: "";
+  position: absolute; inset: -6px; border-radius: 99px;
+  background: rgba(37, 211, 102, .32);
+  animation: waPulse 2.8s ease-out infinite;
+  pointer-events: none; z-index: -1;
+}
+@keyframes waPulse {
+  0%   { transform: scale(1);    opacity: .75; }
+  100% { transform: scale(1.65); opacity: 0;   }
+}
+
+/* ── 3. Press / active feedback — touch + mouse ── */
+.btn:active         { transform: scale(.96) translateY(1px) !important; }
+.btn-primary:active { box-shadow: 0 3px 10px rgba(21,119,194,.25) !important; }
+.btn-wa:active      { box-shadow: 0 3px 10px rgba(37,211,102,.3) !important; }
+
+/* Feedback táctil en tarjetas */
+@media (hover: none) {
+  article:active .card-media {
+    transform: scale(.98) !important;
+    transition: transform .15s var(--ease) !important;
+  }
+}
+
+/* touch-action: respuesta inmediata sin delay de 300ms */
+.btn, .chip, article, .dest-card { touch-action: manipulation; }
+
+/* ── 4. Variantes de reveal con dirección ── */
+.reveal-left {
+  opacity: 0; transform: translateX(-32px);
+  transition: opacity .8s var(--ease-out), transform .8s var(--ease-out);
+}
+.reveal-right {
+  opacity: 0; transform: translateX(32px);
+  transition: opacity .8s var(--ease-out), transform .8s var(--ease-out);
+}
+.reveal-scale {
+  opacity: 0; transform: scale(.93);
+  transition: opacity .7s var(--ease-out), transform .7s var(--ease-out);
+}
+.reveal-left.in, .reveal-right.in, .reveal-scale.in {
+  opacity: 1; transform: none;
+}
+
+/* ── 5. Crossfade en cambio de imagen del carrusel ── */
+@keyframes imgFadeIn {
+  from { opacity: 0; transform: scale(1.03); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+/* ── 6. Overlay de amenidades en hover de tarjeta ── */
+.card-overlay {
+  position: absolute; inset: 0; z-index: 3;
+  background: linear-gradient(0deg, rgba(8,28,56,.72) 0%, transparent 55%);
+  display: flex; align-items: flex-end; padding: 14px 16px;
+  opacity: 0;
+  transition: opacity .32s var(--ease);
+  pointer-events: none;
+  border-radius: 20px;
+}
+@media (hover: hover) {
+  article:hover .card-overlay { opacity: 1; }
+}
+
+/* ── 7. Nav link hover — underline deslizante ── */
+.nav-link {
+  position: relative;
+}
+.nav-link::after {
+  content: "";
+  position: absolute; bottom: 2px;
+  left: 50%; right: 50%;
+  height: 2px; border-radius: 99px;
+  background: var(--cyan);
+  transition: left .28s var(--ease), right .28s var(--ease);
+}
+.nav-link:hover::after { left: 12px; right: 12px; }
+
+/* ── 8. Imagen de destino — zoom al hover ── */
+.dest-card img {
+  transition: transform .55s var(--ease);
+}
+@media (hover: hover) {
+  .dest-card:hover img { transform: scale(1.06); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .btn-primary::after,
+  .floating-wa::before { animation: none !important; }
+  .card-overlay { transition: none; }
+  .reveal-left, .reveal-right, .reveal-scale { transition: none; opacity: 1; transform: none; }
+}

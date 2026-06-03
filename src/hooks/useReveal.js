@@ -12,9 +12,12 @@ export function useReveal() {
           io.unobserve(e.target);
         }
       });
-    }, { threshold: 0.12 });
-    el.querySelectorAll(".reveal").forEach(n => io.observe(n));
-    if (el.classList.contains("reveal")) io.observe(el);
+    }, { threshold: 0.1 });
+
+    // Observa todas las variantes: reveal, reveal-left, reveal-right, reveal-scale
+    el.querySelectorAll("[class*='reveal']").forEach(n => io.observe(n));
+    if (el.className && el.className.includes("reveal")) io.observe(el);
+
     return () => io.disconnect();
   }, []);
   return ref;
