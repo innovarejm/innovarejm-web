@@ -5,6 +5,7 @@ export function useReveal() {
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
+
     const io = new IntersectionObserver((entries) => {
       entries.forEach(e => {
         if (e.isIntersecting) {
@@ -14,11 +15,33 @@ export function useReveal() {
       });
     }, { threshold: 0.1 });
 
-    // Observa todas las variantes: reveal, reveal-left, reveal-right, reveal-scale
-    el.querySelectorAll("[class*='reveal']").forEach(n => io.observe(n));
-    if (el.className && el.className.includes("reveal")) io.observe(el);
+    const tryObserve = (node) => {
+      if (node.nodeType !== 1) return;
+      const cn = node.className;
+      if (typeof cn === 'string' && cn.includes("reveal") && !node.classList.contains("in")) {
+        io.observe(node);
+      }
+    };
 
-    return () => io.disconnect();
+    // Observación inicial
+    el.querySelectorAll("[class*='reveal']:not(.in)").forEach(n => io.observe(n));
+    tryObserve(el);
+
+    // Detecta elementos nuevos (e.g. cuando cambia el filtro de ciudad)
+    const mo = new MutationObserver((mutations) => {
+      mutations.forEach(m => {
+        m.addedNodes.forEach(node => {
+          tryObserve(node);
+          if (node.querySelectorAll) {
+            node.querySelectorAll("[class*='reveal']:not(.in)").forEach(n => io.observe(n));
+          }
+        });
+      });
+    });
+
+    mo.observe(el, { childList: true, subtree: true });
+
+    return () => { io.disconnect(); mo.disconnect(); };
   }, []);
   return ref;
 }

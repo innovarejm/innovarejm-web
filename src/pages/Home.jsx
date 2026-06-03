@@ -365,7 +365,7 @@ function Hero({ onSearch }) {
           color: "rgba(255,255,255,.86)", lineHeight: 1.65,
           textShadow: "0 2px 18px rgba(3,15,40,.45)",
         }}>
-          Apartamentos amoblados con vista al Caribe. Reserva directamente con nosotros, sin intermediarios.
+          Apartamentos amoblados en los mejores destinos del Caribe colombiano. Reserva directamente con nosotros, sin intermediarios.
         </p>
 
         {/* Barra de búsqueda */}
@@ -381,7 +381,7 @@ function Hero({ onSearch }) {
           fontSize: 12.5, color: "rgba(255,255,255,.76)",
         }}>
           {[
-            ["sea",    "Vista directa al mar"],
+            ["sea",    "Destinos únicos"],
             ["shield", "Reserva segura"],
             ["key",    "Check-in flexible"],
           ].map(([ic, t]) => (
@@ -401,34 +401,6 @@ function Hero({ onSearch }) {
         <Icon name="chevD" size={20} />
       </button>
 
-      <style>{`
-        .hero-rise { opacity:0; animation: heroRise 1.1s var(--ease-out) forwards; }
-        @keyframes heroRise {
-          from { opacity:0; transform:translateY(28px); }
-          to   { opacity:1; transform:none; }
-        }
-        .scroll-cue {
-          position:absolute; bottom:26px; left:50%; transform:translateX(-50%); z-index:3;
-          width:48px; height:48px; border-radius:99px; color:#fff;
-          display:grid; place-items:center;
-          border:1px solid rgba(255,255,255,.32);
-          background:rgba(255,255,255,.08); backdrop-filter:blur(8px);
-          animation: bob 2.6s ease-in-out infinite;
-          transition: background .25s;
-        }
-        .scroll-cue:hover { background:rgba(255,255,255,.18); }
-        @keyframes bob {
-          0%,100%{ transform:translateX(-50%) translateY(0); }
-          50%    { transform:translateX(-50%) translateY(8px); }
-        }
-        @media (prefers-reduced-motion: reduce) {
-          .hero-rise { opacity:1; animation:none; }
-          .scroll-cue { animation:none; }
-        }
-        @media (max-width:480px) {
-          .scroll-cue { bottom:18px; width:42px; height:42px; }
-        }
-      `}</style>
     </section>
   );
 }
@@ -438,15 +410,16 @@ function Hero({ onSearch }) {
    ============================================================ */
 function PropertyCard({ p, navigate, index = 0 }) {
   const [fav, setFav] = useState(false);
+  const [favAnim, setFavAnim] = useState(false);
   const [img, setImg] = useState(0);
   const [ratingVal, ratingRef] = useCountUp(p.rating, 1200, 2);
 
   return (
-    <article className="reveal" style={{ transitionDelay: (index * 90) + "ms" }}>
+    <article className="reveal prop-card" style={{ transitionDelay: (index * 90) + "ms" }}>
       <div onClick={() => navigate({ name: "property", id: p.id })} style={{ cursor: "pointer" }}>
 
         {/* Imagen con crossfade al cambiar foto */}
-        <div style={{ position: "relative", borderRadius: 20, overflow: "hidden", aspectRatio: "1.04" }} className="card-media">
+        <div style={{ position: "relative", overflow: "hidden", aspectRatio: "1.04" }} className="card-media">
 
           {/* key={img} fuerza remount → fade-in + ligero zoom */}
           <div key={img} style={{ position: "absolute", inset: 0, animation: "imgFadeIn .38s ease" }}>
@@ -485,17 +458,17 @@ function PropertyCard({ p, navigate, index = 0 }) {
 
           {/* Corazón */}
           <button
-            onClick={e => { e.stopPropagation(); setFav(f => !f); }}
+            onClick={e => { e.stopPropagation(); setFav(f => !f); setFavAnim(true); }}
+            onAnimationEnd={() => setFavAnim(false)}
             style={{
               position: "absolute", top: 12, right: 12, zIndex: 4,
               width: 38, height: 38, borderRadius: 99,
               display: "grid", placeItems: "center", color: "#fff",
               background: fav ? "var(--cyan)" : "rgba(12,38,56,.28)",
               backdropFilter: "blur(4px)",
-              transition: "transform .2s, background .2s",
+              transition: favAnim ? "background .2s" : "transform .2s, background .2s",
+              animation: favAnim ? "heartPop .42s var(--ease-out) forwards" : "none",
             }}
-            onMouseDown={e => e.currentTarget.style.transform = "scale(.82)"}
-            onMouseUp={e => e.currentTarget.style.transform = "scale(1)"}
           >
             <Icon name="heart" size={19} style={{ fill: fav ? "#fff" : "none" }} />
           </button>
@@ -517,7 +490,7 @@ function PropertyCard({ p, navigate, index = 0 }) {
         </div>
 
         {/* Info */}
-        <div style={{ paddingTop: 14 }}>
+        <div style={{ padding: "14px 16px 18px" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 10 }}>
             <h3 style={{ fontSize: 16.5, fontWeight: 700, lineHeight: 1.2 }}>{p.nombre}</h3>
             {/* Rating con contador animado */}
@@ -542,17 +515,6 @@ function PropertyCard({ p, navigate, index = 0 }) {
         </div>
       </div>
 
-      <style>{`
-        article .card-media {
-          transition: transform .42s var(--ease), box-shadow .42s var(--ease);
-        }
-        @media (hover: hover) {
-          article:hover .card-media {
-            transform: translateY(-6px);
-            box-shadow: var(--sh-lg);
-          }
-        }
-      `}</style>
     </article>
   );
 }
@@ -646,7 +608,7 @@ export function Home({ navigate, search }) {
               <span className="eyebrow">Nuestros apartamentos</span>
               <h2 style={{ fontSize: "clamp(28px,3.8vw,44px)", marginTop: 10, maxWidth: 520 }}>
                 Estancias seleccionadas{" "}
-                <span className="serif-it">con el mar de fondo</span>
+                <span className="serif-it">para tu escapada</span>
               </h2>
             </div>
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
@@ -708,15 +670,6 @@ export function Home({ navigate, search }) {
             ))}
           </div>
         </div>
-        <style>{`
-          .dest-grid { display:grid; grid-template-columns:1fr 1fr; gap:20px; }
-          .dest-card { cursor:pointer; transition: transform .4s var(--ease), box-shadow .4s var(--ease); }
-          .dest-card .ph::after { display:none; }
-          @media (hover: hover) {
-            .dest-card:hover { transform: translateY(-4px); box-shadow: var(--sh-lg); }
-          }
-          @media (max-width:620px) { .dest-grid { grid-template-columns:1fr; } }
-        `}</style>
       </section>
 
       {/* ─── OLA DIVISORA ─── */}
@@ -757,7 +710,7 @@ export function Home({ navigate, search }) {
               {[
                 { n: "01", ic: "key",     t: "Trato directo",     d: "Sin intermediarios ni comisiones ocultas. Hablas con nosotros de principio a fin." },
                 { n: "02", ic: "shield",  t: "Reserva segura",    d: "Confirmación inmediata y acompañamiento durante toda tu estancia." },
-                { n: "03", ic: "sea",     t: "Vista garantizada", d: "Todos nuestros apartamentos miran directo al mar Caribe." },
+                { n: "03", ic: "pin",     t: "Ubicación premium",  d: "Seleccionados en los mejores puntos de Cartagena y Santa Marta." },
                 { n: "04", ic: "sparkle", t: "Listos para vivir", d: "Totalmente amoblados y equipados. Llega con tu maleta y nada más." },
               ].map((x, i) => (
                 <div key={x.t} className="reveal-left exp-item" style={{ transitionDelay: (i * 100) + "ms" }}>
@@ -773,47 +726,6 @@ export function Home({ navigate, search }) {
           </div>
         </div>
 
-        <style>{`
-          .exp-layout {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 0 80px;
-            align-items: start;
-          }
-          .exp-heading {
-            position: sticky;
-            top: 110px;
-          }
-          .exp-item {
-            display: grid;
-            grid-template-columns: 44px 1fr 32px;
-            gap: 0 20px;
-            padding: 26px 0;
-            border-top: 1px solid rgba(255,255,255,.11);
-            align-items: flex-start;
-          }
-          .exp-num {
-            font-family: var(--mono);
-            font-size: 11px;
-            letter-spacing: .14em;
-            color: var(--cyan-soft);
-            padding-top: 4px;
-          }
-          .exp-body { flex: 1; }
-          .exp-icon {
-            color: rgba(255,255,255,.12);
-            padding-top: 3px;
-          }
-
-          @media (max-width: 860px) {
-            .exp-layout { grid-template-columns: 1fr !important; gap: 44px 0 !important; }
-            .exp-heading { position: static !important; }
-          }
-          @media (max-width: 480px) {
-            .exp-item { grid-template-columns: 38px 1fr !important; }
-            .exp-icon { display: none !important; }
-          }
-        `}</style>
       </section>
 
       {/* ─── CONTACTO / CTA ─── */}
@@ -839,15 +751,15 @@ export function Home({ navigate, search }) {
             </div>
             <div style={{ position: "relative" }}>
               <h2 style={{ fontSize: "clamp(26px,4vw,48px)", lineHeight: 1.05 }}>
-                ¿Listo para tu escapada{" "}
-                <span className="serif-it">frente al mar</span>?
+                ¿Listo para tu{" "}
+                <span className="serif-it">próxima escapada</span>?
               </h2>
               <p style={{ maxWidth: 430, margin: "18px auto 0", fontSize: 16.5, color: "rgba(255,255,255,.9)" }}>
                 Escríbenos por WhatsApp y te ayudamos a encontrar fechas y el apartamento perfecto.
               </p>
               <div style={{ display: "flex", gap: 12, justifyContent: "center", marginTop: 32, flexWrap: "wrap" }}>
                 <a className="btn btn-wa"
-                  href={waLink("Hola INNOVARE JM, quiero reservar un apartamento frente al mar. ¿Me ayudan con la disponibilidad?")}
+                  href={waLink("Hola INNOVARE JM, quiero reservar un apartamento. ¿Me ayudan con la disponibilidad?")}
                   target="_blank" rel="noopener">
                   <Icon name="wa" size={19} /> Escríbenos por WhatsApp
                 </a>
@@ -864,11 +776,6 @@ export function Home({ navigate, search }) {
       {/* Botón flotante de WhatsApp */}
       <FloatingWA />
 
-      <style>{`
-        .grid-cards { display:grid; grid-template-columns:repeat(3,1fr); gap:28px; }
-        @media (max-width:900px)  { .grid-cards { grid-template-columns:1fr 1fr; gap:20px; } }
-        @media (max-width:560px)  { .grid-cards { grid-template-columns:1fr; gap:22px; } }
-      `}</style>
     </main>
   );
 }
