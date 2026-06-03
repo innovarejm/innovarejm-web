@@ -3,6 +3,12 @@ import { Icon } from '../icons/Icon';
 import { RangeCalendar } from './RangeCalendar';
 import { GuestPicker } from './GuestPicker';
 import { fmtFecha } from '../utils/helpers';
+import { PROPERTIES } from '../data/properties';
+
+// "Apartamento Vacacional Cartagena 1" → "Cartagena 1"
+function shortName(p) {
+  return p.nombre.replace("Apartamento Vacacional ", "");
+}
 
 function Popover({ open, onClose, children, align = "left", width = 340 }) {
   const ref = useRef(null);
@@ -83,11 +89,11 @@ function Popover({ open, onClose, children, align = "left", width = 340 }) {
 
 export function SearchBar({ variant = "hero", onSearch, initial }) {
   const [field, setField] = useState(null);
-  const [dest, setDest] = useState(initial?.dest || "Cualquier destino");
+  const [selectedId, setSelectedId] = useState(initial?.propertyId || null);
   const [range, setRange] = useState(initial?.range || { start: null, end: null });
   const [guests, setGuests] = useState(initial?.guests || { adultos: 2, ninos: 0, bebes: 0 });
 
-  const destinos = ["Cualquier destino", "Cartagena", "Santa Marta"];
+  const selectedProp = PROPERTIES.find(p => p.id === selectedId) || null;
   const totalG = guests.adultos + guests.ninos;
   const close = () => setField(null);
   const dark = variant === "hero";
@@ -121,22 +127,28 @@ export function SearchBar({ variant = "hero", onSearch, initial }) {
       border: "1px solid " + (dark ? "rgba(255,255,255,.6)" : "var(--line)"),
       maxWidth: 880, width: "100%",
     }} className="searchbar">
-      <Seg id="dest" label="Alojamiento" value={dest === "Cualquier destino" ? "" : dest}>
-        <Popover open={field === "dest"} onClose={close} width={270}>
+      <Seg id="dest" label="Alojamiento" value={selectedProp ? shortName(selectedProp) : ""}>
+        <Popover open={field === "dest"} onClose={close} width={290}>
+          <p style={{ fontSize: 11.5, fontWeight: 700, letterSpacing: ".06em", textTransform: "uppercase", color: "var(--muted)", marginBottom: 10, marginTop: 2 }}>
+            Elige un apartamento
+          </p>
           <div style={{ display: "grid", gap: 4 }}>
-            {destinos.map(d => (
-              <button key={d} onClick={() => { setDest(d); setField("in"); }} style={{
+            {PROPERTIES.map(p => (
+              <button key={p.id} onClick={() => { setSelectedId(p.id); setField("in"); }} style={{
                 display: "flex", alignItems: "center", gap: 14, padding: "12px 14px", borderRadius: 14,
-                textAlign: "left", background: dest === d ? "var(--paper-2)" : "transparent",
-                transition: "background .15s", width: "100%",
+                textAlign: "left", width: "100%",
+                background: selectedId === p.id ? "var(--paper-2)" : "transparent",
+                transition: "background .15s",
               }}
                 onMouseEnter={e => e.currentTarget.style.background = "var(--paper-2)"}
-                onMouseLeave={e => e.currentTarget.style.background = dest === d ? "var(--paper-2)" : "transparent"}>
+                onMouseLeave={e => e.currentTarget.style.background = selectedId === p.id ? "var(--paper-2)" : "transparent"}>
                 <span style={{ width: 42, height: 42, borderRadius: 12, background: "var(--grad-brand)", display: "grid", placeItems: "center", color: "#fff", flexShrink: 0 }}>
-                  <Icon name={d === "Cualquier destino" ? "sea" : "pin"} size={20} />
+                  <Icon name="pin" size={20} />
                 </span>
-                {/* color explícito para no heredar white del hero */}
-                <span style={{ fontWeight: 600, fontSize: 14.5, color: "var(--ink)" }}>{d}</span>
+                <div style={{ minWidth: 0 }}>
+                  <div style={{ fontWeight: 700, fontSize: 14, color: "var(--ink)", lineHeight: 1.2 }}>{shortName(p)}</div>
+                  <div style={{ fontSize: 12.5, color: "var(--muted)", marginTop: 2 }}>{p.sector}, {p.ciudad} · Piso {p.piso}</div>
+                </div>
               </button>
             ))}
           </div>
@@ -167,7 +179,7 @@ export function SearchBar({ variant = "hero", onSearch, initial }) {
       </Seg>
 
       <button className="btn btn-primary" style={{ padding: "0 26px", height: 56, borderRadius: 999, flexShrink: 0 }}
-        onClick={() => { close(); onSearch && onSearch({ dest, range, guests }); }}>
+        onClick={() => { close(); onSearch && onSearch({ propertyId: selectedId, range, guests }); }}>
         <Icon name="search" size={19} /> <span className="search-label">Buscar</span>
       </button>
 

@@ -277,7 +277,8 @@ function Hero({ onSearch }) {
       minHeight: "100svh",
       display: "flex", flexDirection: "column",
       justifyContent: "center",
-      color: "#fff", overflow: "hidden",
+      color: "#fff",
+      /* overflow visible para que el dropdown no quede cortado */
     }}>
       <OceanScene />
 
@@ -555,9 +556,15 @@ export function Home({ navigate, search }) {
   return (
     <main ref={ref}>
       <Hero onSearch={(s) => {
-        navigate({ name: "home" });
-        setFilter(s.dest && s.dest !== "Cualquier destino" ? s.dest : "Todos");
-        setTimeout(() => document.getElementById("listado")?.scrollIntoView({ behavior: "smooth" }), 60);
+        if (s.propertyId) {
+          // Navega directo al apartamento seleccionado
+          navigate({ name: "property", id: s.propertyId });
+        } else {
+          // Sin selección: muestra todos y baja al listado
+          navigate({ name: "home" });
+          setFilter("Todos");
+          setTimeout(() => document.getElementById("listado")?.scrollIntoView({ behavior: "smooth" }), 60);
+        }
       }} />
 
       {/* ─── LISTADO ─── */}
