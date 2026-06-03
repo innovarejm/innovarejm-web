@@ -1,9 +1,10 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, lazy, Suspense } from 'react';
 import { Nav } from './components/Nav';
 import { Footer } from './components/Footer';
 import { Home } from './pages/Home';
-import { PropertyDetail } from './pages/PropertyDetail';
-import { Checkout } from './pages/Checkout';
+
+const PropertyDetail = lazy(() => import('./pages/PropertyDetail').then(m => ({ default: m.PropertyDetail })));
+const Checkout       = lazy(() => import('./pages/Checkout').then(m => ({ default: m.Checkout })));
 
 export function App() {
   const [route, setRoute] = useState({ name: "home" });
@@ -26,8 +27,10 @@ export function App() {
     <>
       <Nav navigate={navigate} route={route} transparentTop={transparentTop} />
       {route.name === "home" && <Home navigate={navigate} search={search} />}
-      {route.name === "property" && <PropertyDetail id={route.id} navigate={navigate} />}
-      {route.name === "checkout" && <Checkout id={route.id} booking={route.booking} navigate={navigate} />}
+      <Suspense fallback={null}>
+        {route.name === "property" && <PropertyDetail id={route.id} navigate={navigate} />}
+        {route.name === "checkout" && <Checkout id={route.id} booking={route.booking} navigate={navigate} />}
+      </Suspense>
       <Footer navigate={navigate} />
     </>
   );

@@ -26,10 +26,10 @@ export function Footer({ navigate }) {
               Estancias pensadas para que solo te preocupes por disfrutar.
             </p>
             <div style={{ display: "flex", gap: 10, marginTop: 22 }}>
-              <a href={CONTACT.instagramUrl} target="_blank" rel="noopener" className="foot-soc">
+              <a href={CONTACT.instagramUrl} target="_blank" rel="noopener noreferrer" className="foot-soc">
                 <Icon name="insta" size={19} />
               </a>
-              <a href={waLink("Hola INNOVARE JM 👋")} target="_blank" rel="noopener" className="foot-soc">
+              <a href={waLink("Hola INNOVARE JM 👋")} target="_blank" rel="noopener noreferrer" className="foot-soc">
                 <Icon name="wa" size={19} />
               </a>
             </div>
@@ -47,10 +47,10 @@ export function Footer({ navigate }) {
           </div>
           <div>
             <h4 className="foot-h">Contacto</h4>
-            <a className="foot-link" href={waLink("Hola INNOVARE JM 👋")} target="_blank" rel="noopener">
+            <a className="foot-link" href={waLink("Hola INNOVARE JM 👋")} target="_blank" rel="noopener noreferrer">
               {CONTACT.whatsappDisplay}
             </a>
-            <a className="foot-link" href={CONTACT.instagramUrl} target="_blank" rel="noopener">
+            <a className="foot-link" href={CONTACT.instagramUrl} target="_blank" rel="noopener noreferrer">
               @{CONTACT.instagram}
             </a>
           </div>

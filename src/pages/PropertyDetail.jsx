@@ -7,7 +7,7 @@ import { GuestPicker } from '../components/GuestPicker';
 import { useReveal } from '../hooks/useReveal';
 import { useAvailability } from '../hooks/useAvailability';
 import { PROPERTIES, AMENIDADES, waLink } from '../data/properties';
-import { formatCOP, nightsBetween, fmtFecha } from '../utils/helpers';
+import { formatCOP, nightsBetween, fmtFecha, calcSubtotal } from '../utils/helpers';
 
 /* ---------- Galería ---------- */
 function Gallery({ p }) {
@@ -16,7 +16,7 @@ function Gallery({ p }) {
     <>
       <div className="gallery">
         <button className="g-main" onClick={() => setLightbox(0)}>
-          <PropImage src={p.galeria[0]} alt={`${p.nombre} - foto principal`} />
+          <PropImage src={p.galeria[0]} alt={`${p.nombre} - foto principal`} priority />
         </button>
         {p.galeria.slice(1, 5).map((g, i) => (
           <button key={i} className="g-cell" onClick={() => setLightbox(i + 1)}>
@@ -54,20 +54,6 @@ function Gallery({ p }) {
           </div>
         </div>
       )}
-      <style>{`
-        .gallery{ display:grid; grid-template-columns:1.5fr 1fr 1fr; grid-template-rows:1fr 1fr; gap:10px;
-          height:min(58vh,520px); border-radius:24px; overflow:hidden; }
-        .gallery button{ position:relative; overflow:hidden; cursor:pointer; }
-        .gallery .g-main{ grid-row:1/3; }
-        .gallery .ph{ transition: transform .5s var(--ease); }
-        .gallery button:hover .ph{ transform:scale(1.05); }
-        .gallery button:hover::after{ content:""; position:absolute; inset:0; background:rgba(12,38,56,.08); z-index:2; }
-        @keyframes fade{ from{opacity:0;} to{opacity:1;} }
-        @media (max-width:760px){ .gallery{ grid-template-columns:1fr 1fr; grid-template-rows:1.4fr 1fr; height:auto; }
-          .gallery .g-main{ grid-column:1/3; grid-row:1; aspect-ratio:1.6; }
-          .gallery .g-cell:nth-child(4),.gallery .g-cell:nth-child(5){ display:none; }
-          .gallery .g-cell{ aspect-ratio:1.3; } }
-      `}</style>
     </>
   );
 }
@@ -91,7 +77,6 @@ function MapMini({ p }) {
         color: "var(--blue-deep)", background: "rgba(255,255,255,.7)", padding: "5px 10px", borderRadius: 99 }}>
         mapa · {p.ciudad}
       </span>
-      <style>{`@keyframes pinPulse{ 0%,100%{ transform:translateY(0);} 50%{ transform:translateY(-6px);} }`}</style>
     </div>
   );
 }
@@ -105,9 +90,8 @@ function BookingWidget({ p, navigate }) {
   const { blockedRanges, loading: loadingAvail } = useAvailability(p.id);
 
   const nights = nightsBetween(range.start, range.end);
-  const subtotal = nights * p.precio;
-  const servicio = Math.round(subtotal * p.servicioPct);
-  const total = subtotal + (nights ? p.aseo : 0) + servicio;
+  const { subtotal, rows: priceRows } = calcSubtotal(range.start, range.end, p.precio, p.precioFinde);
+  const total = subtotal;
   const totalG = guests.adultos + guests.ninos;
 
   function reservar() {
@@ -180,15 +164,15 @@ function BookingWidget({ p, navigate }) {
       </button>
       <a className="btn btn-wa" style={{ width: "100%", justifyContent: "center", marginTop: 10, height: 50 }}
         href={waLink(`Hola INNOVARE JM, me interesa "${p.nombre}"${nights ? ` del ${fmtFecha(range.start)} al ${fmtFecha(range.end)} (${nights} noches, ${totalG} huéspedes)` : ""}. ¿Disponibilidad?`)}
-        target="_blank" rel="noopener">
+        target="_blank" rel="noopener noreferrer">
         <Icon name="wa" size={18} /> Consultar por WhatsApp
       </a>
 
       {nights > 0 ? (
         <div style={{ marginTop: 22, display: "grid", gap: 12, fontSize: 14.5 }}>
-          <PriceRow l={`${formatCOP(p.precio)} × ${nights} noche${nights > 1 ? "s" : ""}`} r={formatCOP(subtotal)} />
-          <PriceRow l="Tarifa de limpieza" r={formatCOP(p.aseo)} />
-          <PriceRow l="Tarifa de servicio" r={formatCOP(servicio)} />
+          {priceRows.map((r, i) => (
+            <PriceRow key={i} l={`${formatCOP(r.price)} × ${r.count} noche${r.count > 1 ? "s" : ""}${r.label ? ` (${r.label})` : ""}`} r={formatCOP(r.price * r.count)} />
+          ))}
           <div style={{ borderTop: "1px solid var(--line)", paddingTop: 14, display: "flex", justifyContent: "space-between", fontWeight: 700, fontSize: 16.5 }}>
             <span>Total</span><span>{formatCOP(total)}</span>
           </div>
@@ -198,7 +182,6 @@ function BookingWidget({ p, navigate }) {
           Selecciona tus fechas para ver el total. Aún no se hará ningún cobro.
         </p>
       )}
-      <style>{`.bw{ background:#fff; border:1px solid var(--line); border-radius:22px; padding:24px; box-shadow:var(--sh-lg); }`}</style>
     </div>
   );
 }
@@ -322,13 +305,6 @@ export function PropertyDetail({ id, navigate }) {
         </div>
       </section>
 
-      <style>{`
-        .detail-grid{ display:grid; grid-template-columns:1fr 380px; gap:64px; align-items:start; }
-        @media (max-width:980px){ .detail-grid{ grid-template-columns:1fr; gap:30px; }
-          .detail-side{ order:-1; } .detail-side > div{ position:static !important; }
-          .otras-grid{ grid-template-columns:1fr !important; } }
-        @media (max-width:520px){ .amen-grid{ grid-template-columns:1fr !important; } }
-      `}</style>
     </main>
   );
 }

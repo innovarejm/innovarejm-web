@@ -3,7 +3,7 @@ import { Icon } from '../icons/Icon';
 import { Placeholder } from '../components/Placeholder';
 import { PropImage } from '../components/PropImage';
 import { PROPERTIES, waLink } from '../data/properties';
-import { formatCOP, nightsBetween, fmtFecha } from '../utils/helpers';
+import { formatCOP, nightsBetween, fmtFecha, calcSubtotal } from '../utils/helpers';
 
 function Panel({ n, t, children }) {
   return (
@@ -91,7 +91,7 @@ function DoneCard({ p, navigate, waMsg }) {
         En INNOVARE JM revisaremos la disponibilidad de <strong>{p.nombre}</strong> y te escribiremos muy pronto para confirmar y coordinar el pago.
       </p>
       <div style={{ display: "flex", gap: 12, justifyContent: "center", marginTop: 26, flexWrap: "wrap" }}>
-        <a className="btn btn-wa" href={waLink(waMsg)} target="_blank" rel="noopener">
+        <a className="btn btn-wa" href={waLink(waMsg)} target="_blank" rel="noopener noreferrer">
           <Icon name="wa" size={18} /> Continuar por WhatsApp
         </a>
         <button className="btn btn-line" onClick={() => navigate({ name: "home" })}>Volver al inicio</button>
@@ -108,9 +108,8 @@ export function Checkout({ id, booking, navigate }) {
   const nights = nightsBetween(start, end);
   const totalG = guests.adultos + guests.ninos;
 
-  const subtotal = nights * p.precio;
-  const servicio = Math.round(subtotal * p.servicioPct);
-  const total = subtotal + p.aseo + servicio;
+  const { subtotal, rows: priceRows } = calcSubtotal(start, end, p.precio, p.precioFinde);
+  const total = subtotal + p.aseo;
 
   const [method, setMethod] = useState("wa");
   const [done, setDone] = useState(false);
@@ -170,7 +169,7 @@ ${form.nombre ? "\nMi nombre: " + form.nombre : ""}`;
 
               {method === "wa" ? (
                 <a className="btn btn-wa" style={{ justifyContent: "center", height: 56, fontSize: 16, opacity: valid ? 1 : .5, pointerEvents: valid ? "auto" : "none" }}
-                  href={waLink(waMsg)} target="_blank" rel="noopener" onClick={() => setTimeout(() => setDone(true), 400)}>
+                  href={waLink(waMsg)} target="_blank" rel="noopener noreferrer" onClick={() => setTimeout(() => setDone(true), 400)}>
                   <Icon name="wa" size={20} /> Enviar solicitud por WhatsApp
                 </a>
               ) : (
@@ -202,9 +201,10 @@ ${form.nombre ? "\nMi nombre: " + form.nombre : ""}`;
                   <SumRow l="Noches" r={nights} />
                 </div>
                 <div style={{ paddingTop: 18, display: "grid", gap: 11, fontSize: 14.5 }}>
-                  <PriceRow l={`${formatCOP(p.precio)} × ${nights} noche${nights > 1 ? "s" : ""}`} r={formatCOP(subtotal)} />
+                  {priceRows.map((r, i) => (
+                    <PriceRow key={i} l={`${formatCOP(r.price)} × ${r.count} noche${r.count > 1 ? "s" : ""}${r.label ? ` (${r.label})` : ""}`} r={formatCOP(r.price * r.count)} />
+                  ))}
                   <PriceRow l="Tarifa de limpieza" r={formatCOP(p.aseo)} />
-                  <PriceRow l="Tarifa de servicio" r={formatCOP(servicio)} />
                   <div style={{ borderTop: "1px solid var(--line)", paddingTop: 13, display: "flex", justifyContent: "space-between", fontWeight: 700, fontSize: 17 }}>
                     <span>Total</span><span>{formatCOP(total)}</span>
                   </div>

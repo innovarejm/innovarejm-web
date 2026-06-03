@@ -1,13 +1,49 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { Icon } from '../icons/Icon';
 import { RangeCalendar } from './RangeCalendar';
 import { GuestPicker } from './GuestPicker';
 import { fmtFecha } from '../utils/helpers';
 import { PROPERTIES } from '../data/properties';
 
-// "Apartamento Vacacional Cartagena 1" → "Cartagena 1"
+const DEFAULT_RANGE  = { start: null, end: null };
+const DEFAULT_GUESTS = { adultos: 2, ninos: 0, bebes: 0 };
+
 function shortName(p) {
   return p.nombre.replace("Apartamento Vacacional ", "");
+}
+
+// Defined outside SearchBar so React never sees a new component type between renders
+function Seg({ id, label, value, grow, dark, field, onToggle, children }) {
+  const active = field === id;
+  return (
+    <div style={{ position: "relative", flex: grow ? "1.2 1 0" : "1 1 0", minWidth: 0 }}>
+      <button onClick={() => onToggle(id)} style={{
+        width: "100%", textAlign: "left", padding: "14px 22px", borderRadius: 999,
+        background: active
+          ? (dark ? "rgba(255,255,255,.2)" : "#fff")
+          : "transparent",
+        boxShadow: active && !dark ? "var(--sh-md)" : "none",
+        transition: "background .22s, box-shadow .22s",
+      }}>
+        <div style={{
+          fontSize: 11, fontWeight: 700, letterSpacing: ".04em",
+          color: dark ? "rgba(255,255,255,.72)" : "var(--ink)",
+          marginBottom: 3, textTransform: "uppercase",
+        }}>{label}</div>
+        <div style={{
+          fontSize: 14,
+          color: value
+            ? (dark ? "#fff" : "var(--ink-2)")
+            : (dark ? "rgba(255,255,255,.48)" : "var(--muted)"),
+          whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
+          fontWeight: value ? 500 : 400,
+        }}>
+          {value || "Agregar"}
+        </div>
+      </button>
+      {children}
+    </div>
+  );
 }
 
 function Popover({ open, onClose, children, align = "left", width = 340 }) {
@@ -17,7 +53,6 @@ function Popover({ open, onClose, children, align = "left", width = 340 }) {
     if (!open) return;
     const on = (e) => { if (ref.current && !ref.current.contains(e.target)) onClose(); };
     document.addEventListener("mousedown", on);
-    // Bloquea scroll del body cuando está abierto en móvil
     document.body.style.overflow = window.innerWidth <= 760 ? "hidden" : "";
     return () => {
       document.removeEventListener("mousedown", on);
@@ -28,118 +63,37 @@ function Popover({ open, onClose, children, align = "left", width = 340 }) {
   if (!open) return null;
   return (
     <>
-      {/* Fondo oscuro solo en móvil */}
       <div className="popover-backdrop" onClick={onClose} />
-
-      {/* Panel: dropdown en desktop, bottom sheet en móvil */}
       <div ref={ref} className="popover-panel" style={{
         position: "absolute", top: "calc(100% + 14px)", [align]: 0, width, zIndex: 62,
         background: "#fff", borderRadius: 22, boxShadow: "var(--sh-lg)",
         border: "1px solid var(--line)", padding: 20,
         animation: "popIn .22s var(--ease-out)",
       }}>
-        {/* Asa del bottom sheet (solo móvil) */}
         <div className="sheet-handle" />
         {children}
       </div>
-
-      <style>{`
-        .popover-backdrop { display: none; }
-
-        @media (max-width: 760px) {
-          /* Fondo oscuro semitransparente */
-          .popover-backdrop {
-            display: block;
-            position: fixed; inset: 0; z-index: 61;
-            background: rgba(8, 24, 48, .45);
-            animation: fadeIn .2s ease;
-          }
-          @keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
-
-          /* Bottom sheet */
-          .popover-panel {
-            position: fixed !important;
-            left: 0 !important;
-            right: 0 !important;
-            top: auto !important;
-            bottom: 0 !important;
-            width: 100% !important;
-            max-height: 82vh !important;
-            overflow-y: auto !important;
-            border-radius: 24px 24px 0 0 !important;
-            padding: 8px 20px 32px !important;
-            animation: sheetUp .3s cubic-bezier(.16,1,.3,1) !important;
-          }
-          @keyframes sheetUp {
-            from { transform: translateY(100%); }
-            to   { transform: translateY(0); }
-          }
-
-          /* Asa visual del sheet */
-          .sheet-handle {
-            width: 40px; height: 4px; border-radius: 99px;
-            background: var(--line-strong);
-            margin: 8px auto 16px;
-          }
-        }
-      `}</style>
     </>
   );
 }
 
 export function SearchBar({ variant = "hero", onSearch, initial }) {
-  const [field, setField] = useState(null);
-  const [selectedId, setSelectedId] = useState(initial?.propertyId || null);
-  const [range, setRange] = useState(initial?.range || { start: null, end: null });
-  const [guests, setGuests] = useState(initial?.guests || { adultos: 2, ninos: 0, bebes: 0 });
+  const [field, setField]       = useState(null);
+  const [selectedId, setSelectedId] = useState(() => initial?.propertyId ?? null);
+  const [range, setRange]       = useState(() => initial?.range   ?? DEFAULT_RANGE);
+  const [guests, setGuests]     = useState(() => initial?.guests  ?? DEFAULT_GUESTS);
 
   const selectedProp = PROPERTIES.find(p => p.id === selectedId) || null;
   const totalG = guests.adultos + guests.ninos;
-  const close = () => setField(null);
   const dark = variant === "hero";
 
-  function Seg({ id, label, value, grow, children }) {
-    const active = field === id;
-    return (
-      <div style={{ position: "relative", flex: grow ? "1.2 1 0" : "1 1 0", minWidth: 0 }}>
-        <button onClick={() => setField(active ? null : id)} style={{
-          width: "100%", textAlign: "left", padding: "14px 22px", borderRadius: 999,
-          background: active
-            ? (dark ? "rgba(255,255,255,.2)" : "#fff")
-            : "transparent",
-          boxShadow: active && !dark ? "var(--sh-md)" : "none",
-          transition: "background .22s, box-shadow .22s",
-        }}>
-          {/* Etiqueta — blanca translúcida en hero */}
-          <div style={{
-            fontSize: 11, fontWeight: 700, letterSpacing: ".04em",
-            color: dark ? "rgba(255,255,255,.72)" : "var(--ink)",
-            marginBottom: 3, textTransform: "uppercase",
-          }}>{label}</div>
-          {/* Valor — blanco en hero, oscuro en variante normal */}
-          <div style={{
-            fontSize: 14,
-            color: value
-              ? (dark ? "#fff" : "var(--ink-2)")
-              : (dark ? "rgba(255,255,255,.48)" : "var(--muted)"),
-            whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
-            fontWeight: value ? 500 : 400,
-          }}>
-            {value || "Agregar"}
-          </div>
-        </button>
-        {children}
-      </div>
-    );
-  }
+  const close  = useCallback(() => setField(null), []);
+  const toggle = useCallback((id) => setField(f => f === id ? null : id), []);
 
   return (
     <div style={{
       display: "flex", alignItems: "center", gap: 2,
-      /* ── Glassmorphism en hero, blanco opaco en modo normal ── */
-      background: dark
-        ? "rgba(255,255,255,.10)"
-        : "rgba(255,255,255,.96)",
+      background: dark ? "rgba(255,255,255,.10)" : "rgba(255,255,255,.96)",
       backdropFilter: dark
         ? "blur(28px) saturate(1.6) brightness(1.1)"
         : "blur(8px)",
@@ -153,21 +107,23 @@ export function SearchBar({ variant = "hero", onSearch, initial }) {
       border: "1px solid " + (dark ? "rgba(255,255,255,.22)" : "var(--line)"),
       maxWidth: 880, width: "100%",
     }} className="searchbar">
-      <Seg id="dest" label="Alojamiento" value={selectedProp ? shortName(selectedProp) : ""}>
+
+      <Seg id="dest" label="Alojamiento" value={selectedProp ? shortName(selectedProp) : ""}
+           dark={dark} field={field} onToggle={toggle}>
         <Popover open={field === "dest"} onClose={close} width={290}>
           <p style={{ fontSize: 11.5, fontWeight: 700, letterSpacing: ".06em", textTransform: "uppercase", color: "var(--muted)", marginBottom: 10, marginTop: 2 }}>
             Elige un apartamento
           </p>
           <div style={{ display: "grid", gap: 4 }}>
             {PROPERTIES.map(p => (
-              <button key={p.id} onClick={() => { setSelectedId(p.id); setField("in"); }} style={{
-                display: "flex", alignItems: "center", gap: 14, padding: "12px 14px", borderRadius: 14,
-                textAlign: "left", width: "100%",
-                background: selectedId === p.id ? "var(--paper-2)" : "transparent",
-                transition: "background .15s",
-              }}
-                onMouseEnter={e => e.currentTarget.style.background = "var(--paper-2)"}
-                onMouseLeave={e => e.currentTarget.style.background = selectedId === p.id ? "var(--paper-2)" : "transparent"}>
+              <button key={p.id} onClick={() => { setSelectedId(p.id); toggle("in"); }}
+                className="prop-option"
+                style={{
+                  display: "flex", alignItems: "center", gap: 14, padding: "12px 14px", borderRadius: 14,
+                  textAlign: "left", width: "100%",
+                  background: selectedId === p.id ? "var(--paper-2)" : "transparent",
+                  transition: "background .15s",
+                }}>
                 <span style={{ width: 42, height: 42, borderRadius: 12, background: "var(--grad-brand)", display: "grid", placeItems: "center", color: "#fff", flexShrink: 0 }}>
                   <Icon name="pin" size={20} />
                 </span>
@@ -182,23 +138,25 @@ export function SearchBar({ variant = "hero", onSearch, initial }) {
       </Seg>
 
       <Divider glass={dark} />
-      <Seg id="in" label="Llegada" value={range.start ? fmtFecha(range.start) : ""}>
+      <Seg id="in" label="Llegada" value={range.start ? fmtFecha(range.start) : ""}
+           dark={dark} field={field} onToggle={toggle}>
         <Popover open={field === "in"} onClose={close} width={340} align="left">
-          <RangeCalendar range={range} onChange={(r) => { setRange(r); if (r.start && r.end) setField("guests"); }} />
+          <RangeCalendar range={range} onChange={(r) => { setRange(r); if (r.start && r.end) toggle("guests"); }} />
         </Popover>
       </Seg>
 
       <Divider />
-      <Seg id="out" label="Salida" value={range.end ? fmtFecha(range.end) : ""}>
+      <Seg id="out" label="Salida" value={range.end ? fmtFecha(range.end) : ""}
+           dark={dark} field={field} onToggle={toggle}>
         <Popover open={field === "out"} onClose={close} width={340} align="left">
-          <RangeCalendar range={range} onChange={(r) => { setRange(r); if (r.start && r.end) setField("guests"); }} />
+          <RangeCalendar range={range} onChange={(r) => { setRange(r); if (r.start && r.end) toggle("guests"); }} />
         </Popover>
       </Seg>
 
       <Divider />
       <Seg id="guests" label="Huéspedes"
         value={totalG ? `${totalG} huésped${totalG > 1 ? "es" : ""}${guests.bebes ? " · " + guests.bebes + " bebé" + (guests.bebes > 1 ? "s" : "") : ""}` : ""}
-        grow>
+        grow dark={dark} field={field} onToggle={toggle}>
         <Popover open={field === "guests"} onClose={close} width={320} align="right">
           <GuestPicker value={guests} onChange={setGuests} max={8} />
         </Popover>
@@ -208,51 +166,6 @@ export function SearchBar({ variant = "hero", onSearch, initial }) {
         onClick={() => { close(); onSearch && onSearch({ propertyId: selectedId, range, guests }); }}>
         <Icon name="search" size={19} /> <span className="search-label">Buscar</span>
       </button>
-
-      <style>{`
-        @keyframes popIn { from{opacity:0;transform:translateY(-8px) scale(.98);}to{opacity:1;transform:none;} }
-
-        /* ── Tablet: grilla 2×2 compacta ── */
-        @media (max-width: 760px){
-          /* !important pisa el border-radius:999 y padding:6 inline */
-          .searchbar {
-            flex-wrap: wrap !important;
-            border-radius: 22px !important;
-            padding: 4px !important;
-            gap: 0 !important;
-          }
-          .searchbar > div {
-            flex: 1 1 44% !important;
-            min-width: 0 !important;
-          }
-          .searchbar > div > button {
-            padding: 11px 14px !important;
-          }
-          .sb-divider { display:none; }
-          /* Botón Buscar: fila completa al pie */
-          .searchbar > button.btn {
-            flex: 1 1 auto !important;
-            width: calc(100% - 8px) !important;
-            margin: 3px 4px 3px !important;
-            border-radius: 16px !important;
-            height: 46px !important;
-            justify-content: center;
-          }
-        }
-
-        /* ── Móvil pequeño (< 420px): más compacto ── */
-        @media (max-width: 420px){
-          .searchbar > div > button {
-            padding: 9px 12px !important;
-          }
-          .searchbar > div > button > div:first-child {
-            font-size: 10px !important;
-          }
-          .searchbar > div > button > div:last-child {
-            font-size: 13px !important;
-          }
-        }
-      `}</style>
     </div>
   );
 }

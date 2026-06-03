@@ -1,8 +1,7 @@
 import { useState } from 'react';
 import { Placeholder } from './Placeholder';
 
-/* Muestra una imagen real de propiedad con fallback al Placeholder si falla */
-export function PropImage({ src, alt = "Foto del apartamento", style, className }) {
+export function PropImage({ src, alt = "Foto del apartamento", style, className, priority = false }) {
   const [error, setError] = useState(false);
 
   if (error || !src) {
@@ -22,7 +21,8 @@ export function PropImage({ src, alt = "Foto del apartamento", style, className 
         ...style,
       }}
       className={className}
-      loading="lazy"
+      loading={priority ? "eager" : "lazy"}
+      fetchPriority={priority ? "high" : "auto"}
     />
   );
 }
