@@ -15,7 +15,7 @@ export const AMENIDADES = {
 export const PROPERTIES = [
   {
     id: "bocagrande-1601",
-    nombre: "Bocagrande Vista Mar 1601",
+    nombre: "Apartamento Vacacional Cartagena 1",
     tagline: "Amplio apartamento frente al Caribe en el corazón de Bocagrande",
     ciudad: "Cartagena", sector: "Bocagrande", piso: 16,
     lat: 0.18, lng: 0.32,
@@ -42,7 +42,7 @@ export const PROPERTIES = [
   },
   {
     id: "bocagrande-1604",
-    nombre: "Bocagrande Vista Mar 1604",
+    nombre: "Apartamento Vacacional Cartagena 2",
     tagline: "Suite premium con vista al mar para escapadas en Bocagrande",
     ciudad: "Cartagena", sector: "Bocagrande", piso: 16,
     lat: 0.22, lng: 0.30,
@@ -69,7 +69,7 @@ export const PROPERTIES = [
   },
   {
     id: "rodadero-901",
-    nombre: "Rodadero Vista Mar 901",
+    nombre: "Apartamento Vacacional Santa Marta",
     tagline: "Refugio frente al mar en el Rodadero de Santa Marta",
     ciudad: "Santa Marta", sector: "Rodadero", piso: 9,
     lat: 0.70, lng: 0.78,
