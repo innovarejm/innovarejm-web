@@ -121,20 +121,22 @@ export function SearchBar({ variant = "hero", onSearch, initial }) {
       border: "1px solid " + (dark ? "rgba(255,255,255,.6)" : "var(--line)"),
       maxWidth: 880, width: "100%",
     }} className="searchbar">
-      <Seg id="dest" label="Destino" value={dest === "Cualquier destino" ? "" : dest}>
-        <Popover open={field === "dest"} onClose={close} width={260}>
-          <div style={{ display: "grid", gap: 2 }}>
+      <Seg id="dest" label="Alojamiento" value={dest === "Cualquier destino" ? "" : dest}>
+        <Popover open={field === "dest"} onClose={close} width={270}>
+          <div style={{ display: "grid", gap: 4 }}>
             {destinos.map(d => (
               <button key={d} onClick={() => { setDest(d); setField("in"); }} style={{
-                display: "flex", alignItems: "center", gap: 12, padding: "12px 12px", borderRadius: 12,
-                textAlign: "left", background: dest === d ? "var(--paper-2)" : "transparent", transition: "background .15s",
+                display: "flex", alignItems: "center", gap: 14, padding: "12px 14px", borderRadius: 14,
+                textAlign: "left", background: dest === d ? "var(--paper-2)" : "transparent",
+                transition: "background .15s", width: "100%",
               }}
                 onMouseEnter={e => e.currentTarget.style.background = "var(--paper-2)"}
                 onMouseLeave={e => e.currentTarget.style.background = dest === d ? "var(--paper-2)" : "transparent"}>
-                <span style={{ width: 40, height: 40, borderRadius: 10, background: "var(--grad-brand)", display: "grid", placeItems: "center", color: "#fff", flexShrink: 0 }}>
-                  <Icon name={d === "Cualquier destino" ? "sea" : "pin"} size={19} />
+                <span style={{ width: 42, height: 42, borderRadius: 12, background: "var(--grad-brand)", display: "grid", placeItems: "center", color: "#fff", flexShrink: 0 }}>
+                  <Icon name={d === "Cualquier destino" ? "sea" : "pin"} size={20} />
                 </span>
-                <span style={{ fontWeight: 600, fontSize: 14.5 }}>{d}</span>
+                {/* color explícito para no heredar white del hero */}
+                <span style={{ fontWeight: 600, fontSize: 14.5, color: "var(--ink)" }}>{d}</span>
               </button>
             ))}
           </div>
