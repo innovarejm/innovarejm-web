@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { Icon } from '../icons/Icon';
 import { MESES } from '../utils/helpers';
+import { isDateBlocked } from '../hooks/useAvailability';
 
-export function RangeCalendar({ range, onChange, months = 1, minDate }) {
+export function RangeCalendar({ range, onChange, months = 1, minDate, blockedRanges = [] }) {
   const today = new Date(); today.setHours(0, 0, 0, 0);
   const min = minDate || today;
   const [view, setView] = useState(() => new Date(min.getFullYear(), min.getMonth(), 1));
@@ -38,26 +39,54 @@ export function RangeCalendar({ range, onChange, months = 1, minDate }) {
         <div style={{ display: "grid", gridTemplateColumns: "repeat(7,1fr)", gap: 2 }}>
           {cells.map((d, i) => {
             if (!d) return <div key={i} />;
-            const disabled = d < min;
-            const isStart = start && +d === +start;
-            const isEnd = end && +d === +end;
-            const eff = end || hover;
-            const inRange = start && eff && d > start && d < eff;
+            const pastDate = d < min;
+            const blocked  = isDateBlocked(d, blockedRanges);
+            const disabled = pastDate || blocked;
+            const isStart  = start && +d === +start;
+            const isEnd    = end && +d === +end;
+            const eff      = end || hover;
+            const inRange  = start && eff && d > start && d < eff;
             const selected = isStart || isEnd;
+
             return (
               <button key={i} disabled={disabled}
                 onMouseEnter={() => !disabled && start && !end && setHover(d)}
                 onClick={() => !disabled && pick(d)}
+                title={blocked ? "No disponible (reservado)" : undefined}
                 style={{
-                  aspectRatio: "1", borderRadius: 9, fontSize: 13.5, fontWeight: selected ? 700 : 500,
-                  color: disabled ? "#c8ced3" : selected ? "#fff" : "var(--ink)",
-                  background: selected ? "var(--blue)" : inRange ? "rgba(43,168,224,.14)" : "transparent",
-                  cursor: disabled ? "default" : "pointer",
+                  aspectRatio: "1", borderRadius: 9,
+                  fontSize: 13.5, fontWeight: selected ? 700 : 500,
+                  color: disabled
+                    ? (blocked ? "#e08080" : "#c8ced3")
+                    : selected ? "#fff" : "var(--ink)",
+                  background: selected
+                    ? "var(--blue)"
+                    : blocked   ? "rgba(220,60,60,.08)"
+                    : inRange   ? "rgba(43,168,224,.14)"
+                    : "transparent",
+                  textDecoration: blocked ? "line-through" : "none",
+                  cursor: disabled ? "not-allowed" : "pointer",
                   transition: "background .15s",
+                  position: "relative",
                 }}
-                onMouseOver={e => { if (!disabled && !selected) e.currentTarget.style.background = inRange ? "rgba(43,168,224,.22)" : "var(--paper-2)"; }}
-                onMouseOut={e => { if (!disabled && !selected) e.currentTarget.style.background = inRange ? "rgba(43,168,224,.14)" : "transparent"; }}
-              >{d.getDate()}</button>
+                onMouseOver={e => {
+                  if (!disabled && !selected)
+                    e.currentTarget.style.background = inRange ? "rgba(43,168,224,.22)" : "var(--paper-2)";
+                }}
+                onMouseOut={e => {
+                  if (!disabled && !selected)
+                    e.currentTarget.style.background = inRange ? "rgba(43,168,224,.14)" : "transparent";
+                }}
+              >
+                {d.getDate()}
+                {/* Punto rojo debajo del número para días bloqueados */}
+                {blocked && (
+                  <span style={{
+                    position: "absolute", bottom: 3, left: "50%", transform: "translateX(-50%)",
+                    width: 4, height: 4, borderRadius: "50%", background: "#e08080", display: "block",
+                  }} />
+                )}
+              </button>
             );
           })}
         </div>
@@ -82,6 +111,21 @@ export function RangeCalendar({ range, onChange, months = 1, minDate }) {
         <Month offset={0} />
         {months === 2 && <Month offset={1} />}
       </div>
+
+      {/* Leyenda */}
+      {blockedRanges.length > 0 && (
+        <div style={{ display: "flex", gap: 16, marginTop: 14, fontSize: 11.5, color: "var(--muted)" }}>
+          <span style={{ display: "inline-flex", alignItems: "center", gap: 5 }}>
+            <span style={{ width: 12, height: 12, borderRadius: 3, background: "var(--blue)", display: "inline-block" }} />
+            Seleccionado
+          </span>
+          <span style={{ display: "inline-flex", alignItems: "center", gap: 5 }}>
+            <span style={{ width: 12, height: 12, borderRadius: 3, background: "rgba(220,60,60,.15)", display: "inline-block" }} />
+            No disponible
+          </span>
+        </div>
+      )}
+
       <style>{`@media (max-width:560px){ .cal-months > div:nth-child(2){ display:none; } }`}</style>
     </div>
   );

@@ -5,6 +5,7 @@ import { PropImage } from '../components/PropImage';
 import { RangeCalendar } from '../components/RangeCalendar';
 import { GuestPicker } from '../components/GuestPicker';
 import { useReveal } from '../hooks/useReveal';
+import { useAvailability } from '../hooks/useAvailability';
 import { PROPERTIES, AMENIDADES, waLink } from '../data/properties';
 import { formatCOP, nightsBetween, fmtFecha } from '../utils/helpers';
 
@@ -101,6 +102,7 @@ function BookingWidget({ p, navigate }) {
   const [guests, setGuests] = useState({ adultos: 2, ninos: 0, bebes: 0 });
   const [openCal, setOpenCal] = useState(false);
   const [openG, setOpenG] = useState(false);
+  const { blockedRanges, loading: loadingAvail } = useAvailability(p.id);
 
   const nights = nightsBetween(range.start, range.end);
   const subtotal = nights * p.precio;
@@ -155,7 +157,10 @@ function BookingWidget({ p, navigate }) {
         {openCal && (
           <div style={{ position: "absolute", top: "calc(100% + 14px)", left: 0, width: 340, zIndex: 60,
             background: "#fff", borderRadius: 22, boxShadow: "var(--sh-lg)", border: "1px solid var(--line)", padding: 20 }}>
-            <RangeCalendar range={range} onChange={(r) => { setRange(r); if (r.start && r.end) setOpenCal(false); }} />
+            {loadingAvail && (
+              <p style={{ fontSize: 12, color: "var(--muted)", marginBottom: 8 }}>Cargando disponibilidad…</p>
+            )}
+            <RangeCalendar range={range} onChange={(r) => { setRange(r); if (r.start && r.end) setOpenCal(false); }} blockedRanges={blockedRanges} />
             <button onClick={() => setRange({ start: null, end: null })} style={{ marginTop: 6, fontSize: 13, fontWeight: 600, textDecoration: "underline", color: "var(--ink-2)" }}>
               Borrar fechas
             </button>
