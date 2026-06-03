@@ -9,65 +9,36 @@ import { PROPERTIES, AMENIDADES, waLink } from '../data/properties';
 import { formatCOP } from '../utils/helpers';
 
 /* ============================================================
-   HeroBg — Video loop con carga optimizada + fallback océano CSS
+   HeroBg — Video loop + fallback océano CSS
    ============================================================ */
 function HeroBg() {
-  const [status, setStatus] = useState("loading"); // "loading" | "playing" | "failed"
-  const videoRef = useRef(null);
-
-  useEffect(() => {
-    const v = videoRef.current;
-    if (!v) return;
-    // Si el navegador ya cargó suficiente para reproducir, marcar como playing
-    if (v.readyState >= 2) { setStatus("playing"); return; }
-    const onCanPlay = () => setStatus("playing");
-    const onError   = () => setStatus("failed");
-    v.addEventListener("canplay",        onCanPlay);
-    v.addEventListener("canplaythrough", onCanPlay);
-    v.addEventListener("error",          onError);
-    return () => {
-      v.removeEventListener("canplay",        onCanPlay);
-      v.removeEventListener("canplaythrough", onCanPlay);
-      v.removeEventListener("error",          onError);
-    };
-  }, []);
+  const [ready, setReady] = useState(false);
 
   return (
     <div style={{ position: "absolute", inset: 0, overflow: "hidden" }}>
-      {status !== "failed" && (
-        <video
-          ref={videoRef}
-          autoPlay loop muted playsInline
-          disablePictureInPicture
-          preload="auto"
-          poster="/images/hero-poster.jpg"
-          onError={() => setStatus("failed")}
-          style={{
-            position: "absolute", inset: 0,
-            width: "100%", height: "100%",
-            objectFit: "cover",
-            /* GPU compositing para video 4K */
-            willChange: "transform",
-            transform: "translateZ(0)",
-            /* Fade suave cuando arranca */
-            opacity: status === "playing" ? 1 : 0,
-            transition: "opacity .8s ease",
-          }}
-        >
-          <source src="/videos/hero.webm" type="video/webm" />
-          <source src="/videos/hero.mp4"  type="video/mp4" />
-        </video>
-      )}
 
-      {/* Fallback océano visible mientras carga o si falla */}
-      <div style={{
-        position: "absolute", inset: 0,
-        opacity: status === "playing" ? 0 : 1,
-        transition: "opacity .8s ease",
-        pointerEvents: status === "playing" ? "none" : "auto",
-      }}>
-        <OceanScene />
-      </div>
+      {/* Océano CSS — siempre visible como fondo/fallback */}
+      <OceanScene />
+
+      {/* Video encima: empieza invisible, fade-in cuando el browser lo autoriza */}
+      <video
+        autoPlay loop muted playsInline
+        disablePictureInPicture
+        preload="auto"
+        poster="/images/hero-poster.jpg"
+        onCanPlay={() => setReady(true)}
+        onPlay={()    => setReady(true)}
+        style={{
+          position: "absolute", inset: 0,
+          width: "100%", height: "100%",
+          objectFit: "cover",
+          transform: "translateZ(0)",
+          opacity: ready ? 1 : 0,
+          transition: "opacity 1s ease",
+        }}
+      >
+        <source src="/videos/hero.mp4" type="video/mp4" />
+      </video>
 
       {/* Overlay gradiente para legibilidad del texto */}
       <div style={{
