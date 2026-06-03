@@ -104,12 +104,27 @@ export function SearchBar({ variant = "hero", onSearch, initial }) {
       <div style={{ position: "relative", flex: grow ? "1.2 1 0" : "1 1 0", minWidth: 0 }}>
         <button onClick={() => setField(active ? null : id)} style={{
           width: "100%", textAlign: "left", padding: "14px 22px", borderRadius: 999,
-          background: active ? "#fff" : "transparent",
-          boxShadow: active ? "var(--sh-md)" : "none",
-          transition: "background .2s, box-shadow .2s",
+          background: active
+            ? (dark ? "rgba(255,255,255,.2)" : "#fff")
+            : "transparent",
+          boxShadow: active && !dark ? "var(--sh-md)" : "none",
+          transition: "background .22s, box-shadow .22s",
         }}>
-          <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: ".02em", color: "var(--ink)", marginBottom: 2 }}>{label}</div>
-          <div style={{ fontSize: 14, color: value ? "var(--ink-2)" : "var(--muted)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+          {/* Etiqueta — blanca translúcida en hero */}
+          <div style={{
+            fontSize: 11, fontWeight: 700, letterSpacing: ".04em",
+            color: dark ? "rgba(255,255,255,.72)" : "var(--ink)",
+            marginBottom: 3, textTransform: "uppercase",
+          }}>{label}</div>
+          {/* Valor — blanco en hero, oscuro en variante normal */}
+          <div style={{
+            fontSize: 14,
+            color: value
+              ? (dark ? "#fff" : "var(--ink-2)")
+              : (dark ? "rgba(255,255,255,.48)" : "var(--muted)"),
+            whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
+            fontWeight: value ? 500 : 400,
+          }}>
             {value || "Agregar"}
           </div>
         </button>
@@ -121,10 +136,21 @@ export function SearchBar({ variant = "hero", onSearch, initial }) {
   return (
     <div style={{
       display: "flex", alignItems: "center", gap: 2,
-      background: "rgba(255,255,255,.94)", backdropFilter: "blur(8px)",
-      borderRadius: 999, padding: 6,
-      boxShadow: dark ? "0 20px 60px rgba(12,38,56,.28)" : "var(--sh-md)",
-      border: "1px solid " + (dark ? "rgba(255,255,255,.6)" : "var(--line)"),
+      /* ── Glassmorphism en hero, blanco opaco en modo normal ── */
+      background: dark
+        ? "rgba(255,255,255,.10)"
+        : "rgba(255,255,255,.96)",
+      backdropFilter: dark
+        ? "blur(28px) saturate(1.6) brightness(1.1)"
+        : "blur(8px)",
+      WebkitBackdropFilter: dark
+        ? "blur(28px) saturate(1.6) brightness(1.1)"
+        : "blur(8px)",
+      borderRadius: 999, padding: dark ? 7 : 6,
+      boxShadow: dark
+        ? "0 8px 40px rgba(4,16,44,.45), inset 0 1px 0 rgba(255,255,255,.18), inset 0 -1px 0 rgba(255,255,255,.06)"
+        : "var(--sh-md)",
+      border: "1px solid " + (dark ? "rgba(255,255,255,.22)" : "var(--line)"),
       maxWidth: 880, width: "100%",
     }} className="searchbar">
       <Seg id="dest" label="Alojamiento" value={selectedProp ? shortName(selectedProp) : ""}>
@@ -155,7 +181,7 @@ export function SearchBar({ variant = "hero", onSearch, initial }) {
         </Popover>
       </Seg>
 
-      <Divider />
+      <Divider glass={dark} />
       <Seg id="in" label="Llegada" value={range.start ? fmtFecha(range.start) : ""}>
         <Popover open={field === "in"} onClose={close} width={340} align="left">
           <RangeCalendar range={range} onChange={(r) => { setRange(r); if (r.start && r.end) setField("guests"); }} />
@@ -231,6 +257,11 @@ export function SearchBar({ variant = "hero", onSearch, initial }) {
   );
 }
 
-function Divider() {
-  return <div className="sb-divider" style={{ width: 1, height: 30, background: "var(--line)", flexShrink: 0 }} />;
+function Divider({ glass }) {
+  return (
+    <div className="sb-divider" style={{
+      width: 1, height: 30, flexShrink: 0,
+      background: glass ? "rgba(255,255,255,.22)" : "var(--line)",
+    }} />
+  );
 }

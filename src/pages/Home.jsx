@@ -9,7 +9,48 @@ import { PROPERTIES, AMENIDADES, waLink } from '../data/properties';
 import { formatCOP } from '../utils/helpers';
 
 /* ============================================================
+   HeroBg — Video loop (con fallback al océano CSS)
+   Para activar: coloca tu video en public/videos/hero.mp4
+   y una foto poster en public/images/hero-poster.jpg
+   ============================================================ */
+function HeroBg() {
+  const [videoFailed, setVideoFailed] = useState(false);
+  const VIDEO_SRC = "/videos/hero.mp4";
+
+  return (
+    <div style={{ position: "absolute", inset: 0, overflow: "hidden" }}>
+      {!videoFailed ? (
+        <>
+          <video
+            autoPlay loop muted playsInline
+            poster="/images/hero-poster.jpg"
+            onError={() => setVideoFailed(true)}
+            style={{
+              position: "absolute", inset: 0,
+              width: "100%", height: "100%",
+              objectFit: "cover",
+            }}
+          >
+            <source src="/videos/hero.webm" type="video/webm" />
+            <source src={VIDEO_SRC} type="video/mp4" />
+          </video>
+          {/* Overlay de gradiente para legibilidad del texto */}
+          <div style={{
+            position: "absolute", inset: 0,
+            background: "linear-gradient(180deg, rgba(4,14,32,.52) 0%, rgba(4,14,32,.18) 45%, rgba(6,22,50,.58) 100%)",
+          }} />
+        </>
+      ) : (
+        /* Fallback: océano CSS animado */
+        <OceanScene />
+      )}
+    </div>
+  );
+}
+
+/* ============================================================
    OceanScene — parallax + mouse tracking + partículas + rayos
+   (activo mientras no haya video en /public/videos/hero.mp4)
    ============================================================ */
 function OceanScene() {
   const ref = useRef(null);
@@ -281,7 +322,7 @@ function Hero({ onSearch }) {
       color: "#fff",
       /* overflow visible para que el dropdown no quede cortado */
     }}>
-      <OceanScene />
+      <HeroBg />
 
       <div className="wrap" style={{ position: "relative", zIndex: 2, paddingTop: 90, textAlign: "center" }}>
 
