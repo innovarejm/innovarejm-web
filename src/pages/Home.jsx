@@ -19,12 +19,14 @@ function HeroBg() {
     const v = videoRef.current;
     if (!v) return;
     // Si el navegador ya cargó suficiente para reproducir, marcar como playing
-    if (v.readyState >= 3) { setStatus("playing"); return; }
+    if (v.readyState >= 2) { setStatus("playing"); return; }
     const onCanPlay = () => setStatus("playing");
     const onError   = () => setStatus("failed");
+    v.addEventListener("canplay",        onCanPlay);
     v.addEventListener("canplaythrough", onCanPlay);
     v.addEventListener("error",          onError);
     return () => {
+      v.removeEventListener("canplay",        onCanPlay);
       v.removeEventListener("canplaythrough", onCanPlay);
       v.removeEventListener("error",          onError);
     };
