@@ -13,21 +13,23 @@ import { formatCOP } from '../utils/helpers';
    ============================================================ */
 function HeroBg() {
   const [ready, setReady] = useState(false);
+  const [failed, setFailed] = useState(false);
 
   return (
-    <div style={{ position: "absolute", inset: 0, overflow: "hidden" }}>
+    <div style={{
+      position: "absolute", inset: 0, overflow: "hidden",
+      /* Poster como fondo inmediato — sin flash de animación al cargar */
+      background: "#040e20 url('/images/hero-poster.jpg') center/cover no-repeat",
+    }}>
 
-      {/* Océano CSS — siempre visible como fondo/fallback */}
-      <OceanScene />
-
-      {/* Video encima: empieza invisible, fade-in cuando el browser lo autoriza */}
+      {/* Video: fade-in cuando el browser lo autoriza */}
       <video
         autoPlay loop muted playsInline
         disablePictureInPicture
         preload="auto"
-        poster="/images/hero-poster.jpg"
         onCanPlay={() => setReady(true)}
         onPlay={()    => setReady(true)}
+        onError={()   => setFailed(true)}
         style={{
           position: "absolute", inset: 0,
           width: "100%", height: "100%",
@@ -39,6 +41,9 @@ function HeroBg() {
       >
         <source src="/videos/hero.mp4" type="video/mp4" />
       </video>
+
+      {/* OceanScene solo si el video falla del todo */}
+      {failed && <OceanScene />}
 
       {/* Overlay gradiente para legibilidad del texto */}
       <div style={{
@@ -117,196 +122,6 @@ function OceanScene() {
       </div>
 
       <div className="grain" />
-
-      <style>{`
-        /* ── Base ── */
-        .ocean {
-          position: absolute; inset: 0; overflow: hidden;
-          animation: oceanReveal 2s var(--ease-out) both;
-        }
-        @keyframes oceanReveal { from { opacity:0; } to { opacity:1; } }
-
-        /* ── Cielo (parallax en scroll + suave con mouse) ── */
-        .ocean .sky {
-          position: absolute; top: -25%; left: 0; right: 0; bottom: 0;
-          background: linear-gradient(180deg,
-            #020b18 0%, #062540 8%, #0a3a63 22%, #0f5d97 38%,
-            #2a8cc4 54%, #6fc0e6 72%, #bfe6f6 88%, #eaf6fc 100%
-          );
-          transform: translateY(calc(var(--scroll, 0px) * 0.28));
-        }
-
-        /* ── Rayos de luz solares ── */
-        .rays-outer {
-          position: absolute;
-          left: 50%; top: -12%;
-          width: 220%; height: 80%;
-          transform: translateX(-50%) translateY(calc(var(--scroll, 0px) * 0.12));
-          pointer-events: none;
-        }
-        .ocean .rays {
-          position: absolute; inset: 0;
-          transform-origin: 50% 40%;
-          background: repeating-conic-gradient(
-            from 0deg at 50% 40%,
-            rgba(255,240,180,.02) 0deg 5deg,
-            transparent 5deg 22deg
-          );
-          -webkit-mask-image: radial-gradient(ellipse 65% 65% at 50% 40%, black 5%, transparent 68%);
-          mask-image: radial-gradient(ellipse 65% 65% at 50% 40%, black 5%, transparent 68%);
-          animation: raysRotate 90s linear infinite;
-        }
-        @keyframes raysRotate { to { transform: rotate(360deg); } }
-
-        /* ── Sol con tracking de mouse ── */
-        .ocean .sun {
-          position: absolute;
-          left: 50%; top: 29%;
-          width: 380px; height: 380px;
-          /* CSS translate independiente: no interfiere con la animación */
-          translate: -50% -50%;
-          margin-left: calc((var(--mx, .5) - .5) * 30px);
-          margin-top: calc((var(--my, .5) - .5) * 14px);
-          background: radial-gradient(circle,
-            #fffff5 0%, rgba(255,248,215,.96) 7%,
-            rgba(255,236,170,.72) 22%, rgba(255,220,140,.28) 42%, transparent 65%
-          );
-          filter: blur(2px);
-          animation: sunPulse 10s ease-in-out infinite;
-        }
-
-        /* ── Corona del sol ── */
-        .ocean .corona {
-          position: absolute;
-          left: 50%; top: 29%;
-          width: 560px; height: 560px;
-          translate: -50% -50%;
-          margin-left: calc((var(--mx, .5) - .5) * 30px);
-          margin-top: calc((var(--my, .5) - .5) * 14px);
-          background: radial-gradient(circle,
-            transparent 17%, rgba(255,236,160,.055) 27%,
-            transparent 38%, rgba(255,220,130,.04) 50%, transparent 64%
-          );
-          animation: coronaPulse 14s ease-in-out infinite;
-          pointer-events: none;
-        }
-
-        @keyframes sunPulse {
-          0%,100% { opacity:.88; filter:blur(2px); }
-          50%      { opacity:1;   filter:blur(1px) brightness(1.09); }
-        }
-        @keyframes coronaPulse {
-          0%,100% { transform:scale(1);    opacity:.55; }
-          50%     { transform:scale(1.18); opacity:1;   }
-        }
-
-        /* ── Brillo en el horizonte ── */
-        .ocean .glow {
-          position: absolute; left:0; right:0; top:50%; height:180px;
-          background: radial-gradient(65% 100% at 50% 0%, rgba(255,190,80,.14), transparent 70%);
-          transform: translateY(calc(var(--scroll, 0px) * 0.14));
-          pointer-events: none;
-        }
-        .ocean .horizon-mist {
-          position: absolute; left:0; right:0; top:51%; height:55px;
-          background: linear-gradient(180deg, rgba(255,210,140,.08), transparent);
-          pointer-events: none;
-        }
-
-        /* ── Mar ── */
-        .ocean .sea {
-          position: absolute; left:0; right:0; bottom:0; height:44%;
-          background: linear-gradient(180deg,
-            #5bbddd 0%, #2285bb 18%, #116098 40%, #0a4680 66%, #051530 100%
-          );
-          overflow: hidden;
-          transform: translateY(calc(var(--scroll, 0px) * 0.04));
-        }
-
-        /* ── Destello del agua ── */
-        .ocean .shimmer {
-          position: absolute; inset: 0;
-          background: repeating-linear-gradient(
-            180deg, rgba(255,255,255,.11) 0 1.5px, rgba(255,255,255,0) 1.5px 8px
-          );
-          -webkit-mask-image: linear-gradient(180deg, black, transparent 65%);
-          mask-image: linear-gradient(180deg, black, transparent 65%);
-          animation: shimmer 5s linear infinite;
-          opacity: .5;
-        }
-        @keyframes shimmer { from { background-position:0 0; } to { background-position:0 20px; } }
-
-        /* ── Reflejo solar en el agua (sigue mouse) ── */
-        .ocean .sun-reflection {
-          position: absolute;
-          left: calc(50% + (var(--mx, .5) - .5) * 55px);
-          top: 0; bottom: 0;
-          width: 190px;
-          transform: translateX(-50%);
-          background: linear-gradient(180deg,
-            rgba(255,230,120,.24) 0%, rgba(255,230,120,.11) 40%,
-            rgba(255,230,120,.04) 70%, transparent
-          );
-          filter: blur(16px);
-          animation: reflectionWaver 9s ease-in-out infinite;
-        }
-        @keyframes reflectionWaver {
-          0%,100% { width:160px; opacity:.8; }
-          50%     { width:240px; opacity:1;  }
-        }
-
-        /* ── Olas ── */
-        .ocean .wave { position:absolute; left:-5%; width:110%; height:120px; }
-        .ocean .wave-back { top:0; height:100px; }
-        .ocean .wave-back path { fill: rgba(100,180,225,.06); }
-        .ocean .wave-1 { top:2%; animation: drift 14s ease-in-out infinite alternate; }
-        .ocean .wave-1 path { fill: rgba(255,255,255,.12); }
-        .ocean .wave-2 { top:9%; animation: drift 20s ease-in-out infinite alternate-reverse; }
-        .ocean .wave-2 path { fill: rgba(255,255,255,.09); }
-        .ocean .wave-3 { top:18%; animation: drift 26s ease-in-out infinite alternate; }
-        .ocean .wave-3 path { fill: rgba(5,25,50,.48); }
-        @keyframes drift { from{ transform:translateX(-4%); } to{ transform:translateX(4%); } }
-
-        /* ── Espuma en la orilla de las olas ── */
-        .ocean .foam {
-          position: absolute; left:-5%; width:110%; top:17%; height:12px;
-          background: repeating-linear-gradient(90deg,
-            transparent 0 18px, rgba(255,255,255,.13) 18px 44px,
-            transparent 44px 68px, rgba(255,255,255,.07) 68px 94px,
-            transparent 94px 128px
-          );
-          filter: blur(5px);
-          animation: drift 11s ease-in-out infinite alternate-reverse;
-        }
-
-        /* ── Partículas flotando desde el mar ── */
-        .ocean .particles { position:absolute; inset:0; pointer-events:none; overflow:hidden; }
-        .ocean .particle {
-          position: absolute;
-          width: 2px; height: 2px; border-radius: 50%;
-          background: rgba(255,255,255,.75);
-          bottom: calc(44% + 3%);
-          left: calc(var(--pi, 0) * 7.1% + 3%);
-          animation: particleFloat calc(4.5s + var(--pi, 0) * 0.65s) ease-in-out calc(var(--pi, 0) * 0.55s) infinite;
-          opacity: 0;
-        }
-        @keyframes particleFloat {
-          0%   { transform: translateY(0) scale(1); opacity:0; }
-          15%  { opacity:.7; }
-          65%  { opacity:.3; }
-          100% { transform: translateY(-58px) translateX(calc((var(--pi, 0) - 7) * 2.5px)) scale(.35); opacity:0; }
-        }
-
-        /* ── Textura de grano ── */
-        .ocean .grain {
-          position:absolute; inset:0; opacity:.075; pointer-events:none;
-          background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence baseFrequency='.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-        }
-
-        @media (prefers-reduced-motion: reduce) {
-          .ocean * { animation:none !important; transition:none !important; }
-        }
-      `}</style>
     </div>
   );
 }
@@ -398,34 +213,6 @@ function Hero({ onSearch }) {
         <Icon name="chevD" size={20} />
       </button>
 
-      <style>{`
-        .hero-rise { opacity:0; animation: heroRise 1.1s var(--ease-out) forwards; }
-        @keyframes heroRise {
-          from { opacity:0; transform:translateY(28px); }
-          to   { opacity:1; transform:none; }
-        }
-        .scroll-cue {
-          position:absolute; bottom:26px; left:50%; transform:translateX(-50%); z-index:3;
-          width:48px; height:48px; border-radius:99px; color:#fff;
-          display:grid; place-items:center;
-          border:1px solid rgba(255,255,255,.32);
-          background:rgba(255,255,255,.08); backdrop-filter:blur(8px);
-          animation: bob 2.6s ease-in-out infinite;
-          transition: background .25s;
-        }
-        .scroll-cue:hover { background:rgba(255,255,255,.18); }
-        @keyframes bob {
-          0%,100%{ transform:translateX(-50%) translateY(0); }
-          50%    { transform:translateX(-50%) translateY(8px); }
-        }
-        @media (prefers-reduced-motion: reduce) {
-          .hero-rise { opacity:1; animation:none; }
-          .scroll-cue { animation:none; }
-        }
-        @media (max-width:480px) {
-          .scroll-cue { bottom:18px; width:42px; height:42px; }
-        }
-      `}</style>
     </section>
   );
 }
@@ -466,7 +253,7 @@ function PropertyCard({ p, navigate, index = 0 }) {
             </div>
           </div>
 
-          {p.destacado && (
+          {p.destacado ? (
             <span style={{
               position: "absolute", top: 14, left: 14, zIndex: 4,
               fontSize: 11.5, fontWeight: 700, letterSpacing: ".04em",
@@ -478,21 +265,19 @@ function PropertyCard({ p, navigate, index = 0 }) {
               <Icon name="sparkle" size={13} style={{ color: "oklch(0.78 0.09 75)" }} />
               Favorito de huéspedes
             </span>
-          )}
+          ) : null}
 
           {/* Corazón */}
           <button
             onClick={e => { e.stopPropagation(); setFav(f => !f); }}
+            className="card-fav-btn"
             style={{
               position: "absolute", top: 12, right: 12, zIndex: 4,
               width: 38, height: 38, borderRadius: 99,
               display: "grid", placeItems: "center", color: "#fff",
               background: fav ? "var(--cyan)" : "rgba(12,38,56,.28)",
               backdropFilter: "blur(4px)",
-              transition: "transform .2s, background .2s",
             }}
-            onMouseDown={e => e.currentTarget.style.transform = "scale(.82)"}
-            onMouseUp={e => e.currentTarget.style.transform = "scale(1)"}
           >
             <Icon name="heart" size={19} style={{ fill: fav ? "#fff" : "none" }} />
           </button>
@@ -539,17 +324,6 @@ function PropertyCard({ p, navigate, index = 0 }) {
         </div>
       </div>
 
-      <style>{`
-        article .card-media {
-          transition: transform .42s var(--ease), box-shadow .42s var(--ease);
-        }
-        @media (hover: hover) {
-          article:hover .card-media {
-            transform: translateY(-6px);
-            box-shadow: var(--sh-lg);
-          }
-        }
-      `}</style>
     </article>
   );
 }
@@ -577,7 +351,7 @@ function FloatingWA() {
     <>
       <a
         href={waLink("Hola INNOVARE JM 👋")}
-        target="_blank" rel="noopener"
+        target="_blank" rel="noopener noreferrer"
         aria-label="Contactar por WhatsApp"
         className="floating-wa"
         style={{
@@ -601,7 +375,6 @@ function FloatingWA() {
       >
         <Icon name="wa" size={26} />
       </a>
-      <style>{`@keyframes waFadeIn { from { opacity:0; transform:scale(.75); } to { opacity:1; transform:scale(1); } }`}</style>
     </>
   );
 }
@@ -705,15 +478,6 @@ export function Home({ navigate, search }) {
             ))}
           </div>
         </div>
-        <style>{`
-          .dest-grid { display:grid; grid-template-columns:1fr 1fr; gap:20px; }
-          .dest-card { cursor:pointer; transition: transform .4s var(--ease), box-shadow .4s var(--ease); }
-          .dest-card .ph::after { display:none; }
-          @media (hover: hover) {
-            .dest-card:hover { transform: translateY(-4px); box-shadow: var(--sh-lg); }
-          }
-          @media (max-width:620px) { .dest-grid { grid-template-columns:1fr; } }
-        `}</style>
       </section>
 
       {/* ─── OLA DIVISORA ─── */}
@@ -743,7 +507,7 @@ export function Home({ navigate, search }) {
                 className="btn btn-wa"
                 style={{ marginTop: 32 }}
                 href={waLink("Hola INNOVARE JM, quiero saber más sobre disponibilidad.")}
-                target="_blank" rel="noopener"
+                target="_blank" rel="noopener noreferrer"
               >
                 <Icon name="wa" size={18} /> Escríbenos
               </a>
@@ -770,47 +534,6 @@ export function Home({ navigate, search }) {
           </div>
         </div>
 
-        <style>{`
-          .exp-layout {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 0 80px;
-            align-items: start;
-          }
-          .exp-heading {
-            position: sticky;
-            top: 110px;
-          }
-          .exp-item {
-            display: grid;
-            grid-template-columns: 44px 1fr 32px;
-            gap: 0 20px;
-            padding: 26px 0;
-            border-top: 1px solid rgba(255,255,255,.11);
-            align-items: flex-start;
-          }
-          .exp-num {
-            font-family: var(--mono);
-            font-size: 11px;
-            letter-spacing: .14em;
-            color: var(--cyan-soft);
-            padding-top: 4px;
-          }
-          .exp-body { flex: 1; }
-          .exp-icon {
-            color: rgba(255,255,255,.12);
-            padding-top: 3px;
-          }
-
-          @media (max-width: 860px) {
-            .exp-layout { grid-template-columns: 1fr !important; gap: 44px 0 !important; }
-            .exp-heading { position: static !important; }
-          }
-          @media (max-width: 480px) {
-            .exp-item { grid-template-columns: 38px 1fr !important; }
-            .exp-icon { display: none !important; }
-          }
-        `}</style>
       </section>
 
       {/* ─── CONTACTO / CTA ─── */}
@@ -845,7 +568,7 @@ export function Home({ navigate, search }) {
               <div style={{ display: "flex", gap: 12, justifyContent: "center", marginTop: 32, flexWrap: "wrap" }}>
                 <a className="btn btn-wa"
                   href={waLink("Hola INNOVARE JM, quiero reservar un apartamento frente al mar. ¿Me ayudan con la disponibilidad?")}
-                  target="_blank" rel="noopener">
+                  target="_blank" rel="noopener noreferrer">
                   <Icon name="wa" size={19} /> Escríbenos por WhatsApp
                 </a>
                 <button className="btn" style={{ background: "rgba(255,255,255,.16)", color: "#fff", border: "1px solid rgba(255,255,255,.4)" }}
@@ -861,11 +584,6 @@ export function Home({ navigate, search }) {
       {/* Botón flotante de WhatsApp */}
       <FloatingWA />
 
-      <style>{`
-        .grid-cards { display:grid; grid-template-columns:repeat(3,1fr); gap:28px; }
-        @media (max-width:900px)  { .grid-cards { grid-template-columns:1fr 1fr; gap:20px; } }
-        @media (max-width:560px)  { .grid-cards { grid-template-columns:1fr; gap:22px; } }
-      `}</style>
     </main>
   );
 }
