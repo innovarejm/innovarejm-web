@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Icon } from '../icons/Icon';
 import { Placeholder } from '../components/Placeholder';
+import { PropImage } from '../components/PropImage';
 import { SearchBar } from '../components/SearchBar';
 import { useReveal } from '../hooks/useReveal';
 import { PROPERTIES, waLink } from '../data/properties';
@@ -397,7 +398,7 @@ function PropertyCard({ p, navigate, index = 0 }) {
 
         {/* Imagen / placeholder */}
         <div style={{ position: "relative", borderRadius: 20, overflow: "hidden", aspectRatio: "1.04" }} className="card-media">
-          <Placeholder label={p.galeria[img]} style={{ position: "absolute", inset: 0 }} />
+          <PropImage src={p.galeria[img]} alt={`${p.nombre} - foto ${img + 1}`} />
 
           {p.destacado && (
             <span style={{
@@ -610,7 +611,10 @@ export function Home({ navigate, search }) {
                 className="dest-card"
                 style={{ position: "relative", borderRadius: 24, overflow: "hidden", aspectRatio: "1.75", textAlign: "left", color: "#fff" }}
               >
-                <Placeholder label={x.label} style={{ position: "absolute", inset: 0 }} />
+                <PropImage
+                  src={x.c === "Cartagena" ? "/images/cartagena-1/01.jpg" : "/images/santamarta/01.jpg"}
+                  alt={x.label}
+                />
                 <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(8,40,70,0) 35%, rgba(8,40,70,.8))" }} />
                 <div style={{ position: "absolute", left: 26, bottom: 24, zIndex: 2 }}>
                   <div style={{ fontSize: 30, fontWeight: 800, letterSpacing: "-.02em", lineHeight: 1 }}>{x.c}</div>

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Icon } from '../icons/Icon';
 import { Placeholder } from '../components/Placeholder';
+import { PropImage } from '../components/PropImage';
 import { PROPERTIES, waLink } from '../data/properties';
 import { formatCOP, nightsBetween, fmtFecha } from '../utils/helpers';
 
@@ -185,7 +186,7 @@ ${form.nombre ? "\nMi nombre: " + form.nombre : ""}`;
               <div style={{ position: "sticky", top: 96, background: "#fff", border: "1px solid var(--line)", borderRadius: 22, padding: 22, boxShadow: "var(--sh-md)" }}>
                 <div style={{ display: "flex", gap: 14, paddingBottom: 18, borderBottom: "1px solid var(--line)" }}>
                   <div style={{ width: 92, height: 80, borderRadius: 12, overflow: "hidden", position: "relative", flexShrink: 0 }}>
-                    <Placeholder label="" style={{ position: "absolute", inset: 0 }} />
+                    <PropImage src={p.galeria[0]} alt={p.nombre} />
                   </div>
                   <div>
                     <h3 style={{ fontSize: 16, fontWeight: 700, lineHeight: 1.2 }}>{p.nombre}</h3>

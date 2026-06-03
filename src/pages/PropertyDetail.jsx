@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Icon } from '../icons/Icon';
 import { Placeholder } from '../components/Placeholder';
+import { PropImage } from '../components/PropImage';
 import { RangeCalendar } from '../components/RangeCalendar';
 import { GuestPicker } from '../components/GuestPicker';
 import { useReveal } from '../hooks/useReveal';
@@ -14,11 +15,11 @@ function Gallery({ p }) {
     <>
       <div className="gallery">
         <button className="g-main" onClick={() => setLightbox(0)}>
-          <Placeholder label={p.galeria[0]} style={{ position: "absolute", inset: 0 }} />
+          <PropImage src={p.galeria[0]} alt={`${p.nombre} - foto principal`} />
         </button>
         {p.galeria.slice(1, 5).map((g, i) => (
           <button key={i} className="g-cell" onClick={() => setLightbox(i + 1)}>
-            <Placeholder label={g} style={{ position: "absolute", inset: 0 }} />
+            <PropImage src={g} alt={`${p.nombre} - foto ${i + 2}`} />
             {i === 3 && (
               <span style={{ position: "absolute", right: 14, bottom: 14, zIndex: 3, fontSize: 13, fontWeight: 600,
                 padding: "9px 16px", borderRadius: 99, background: "rgba(255,255,255,.94)", color: "var(--ink)",
@@ -41,7 +42,7 @@ function Gallery({ p }) {
             <Icon name="chevL" size={30} />
           </button>
           <div onClick={e => e.stopPropagation()} style={{ width: "min(1000px, 90vw)", aspectRatio: "1.5", borderRadius: 18, overflow: "hidden", position: "relative" }}>
-            <Placeholder label={p.galeria[lightbox]} style={{ position: "absolute", inset: 0 }} />
+            <PropImage src={p.galeria[lightbox]} alt={`${p.nombre} - foto ${lightbox + 1}`} />
           </div>
           <button onClick={e => { e.stopPropagation(); setLightbox(l => (l + 1) % p.galeria.length); }}
             style={{ position: "absolute", right: 18, color: "#fff", padding: 12 }}>
@@ -300,7 +301,7 @@ export function PropertyDetail({ id, navigate }) {
               <article key={o.id} className="reveal" style={{ transitionDelay: (i * 90) + "ms", cursor: "pointer" }}
                 onClick={() => navigate({ name: "property", id: o.id })}>
                 <div style={{ position: "relative", borderRadius: 20, overflow: "hidden", aspectRatio: "1.04" }}>
-                  <Placeholder label={o.galeria[0]} style={{ position: "absolute", inset: 0 }} />
+                  <PropImage src={o.galeria[0]} alt={o.nombre} />
                 </div>
                 <div style={{ paddingTop: 12 }}>
                   <h3 style={{ fontSize: 16, fontWeight: 700 }}>{o.nombre}</h3>
