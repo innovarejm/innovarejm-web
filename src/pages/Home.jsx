@@ -584,6 +584,11 @@ export function Home({ navigate, search }) {
       {/* Botón flotante de WhatsApp */}
       <FloatingWA />
 
+      <style>{`
+        .grid-cards { display:grid; grid-template-columns:repeat(3,1fr); gap:28px; }
+        @media (max-width:900px)  { .grid-cards { grid-template-columns:1fr 1fr; gap:20px; } }
+        @media (max-width:560px)  { .grid-cards { grid-template-columns:1fr; gap:22px; } }
+      `}</style>
     </main>
   );
 }
