@@ -1,6 +1,7 @@
 import { Wordmark } from '../brand/Wordmark';
 import { Icon } from '../icons/Icon';
 import { CONTACT, PROPERTIES, waLink } from '../data/properties';
+import { routeToUrl } from '../router';
 
 const CIUDADES = [...new Set(PROPERTIES.map(p => p.ciudad))];
 
@@ -56,6 +57,10 @@ export function Footer({ navigate }) {
             <a className="foot-link" href={CONTACT.instagramUrl} target="_blank" rel="noopener noreferrer">
               @{CONTACT.instagram}
             </a>
+            <a className="foot-link" href={routeToUrl({ name: "privacy" })}
+              onClick={e => { e.preventDefault(); navigate({ name: "privacy" }); }}>
+              Política de datos
+            </a>
           </div>
         </div>
 
@@ -65,6 +70,8 @@ export function Footer({ navigate }) {
           fontSize: 12.5, color: "rgba(255,255,255,.5)",
         }}>
           <span>© {new Date().getFullYear()} INNOVARE JM Inmobiliaria · Colombia</span>
+          {/* Registro Nacional de Turismo de cada alojamiento (obligatorio en su publicidad) */}
+          <span>RNT {PROPERTIES.filter(p => p.rnt).map(p => p.rnt).join(" · ")}</span>
           <span style={{ fontFamily: "var(--mono)", letterSpacing: ".08em" }}>Hecho con vista al mar</span>
         </div>
       </div>

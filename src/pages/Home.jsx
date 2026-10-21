@@ -1,44 +1,53 @@
 ﻿import { useState, useEffect, useRef } from 'react';
 import { Icon } from '../icons/Icon';
-import { Placeholder } from '../components/Placeholder';
 import { PropImage } from '../components/PropImage';
 import { SearchBar } from '../components/SearchBar';
 import { useReveal } from '../hooks/useReveal';
 import { useCountUp } from '../hooks/useCountUp';
+import { useFavorites } from '../hooks/useFavorites';
+import { useAvailabilityMap, isRangeAvailable } from '../hooks/useAvailability';
 import { PROPERTIES, AMENIDADES, DESTINOS, waLink } from '../data/properties';
-import { formatCOP } from '../utils/helpers';
+import { formatCOP, fmtFecha, huespedesTxt } from '../utils/helpers';
+import { routeToUrl } from '../router';
 
 /* ============================================================
    HeroBg — Video loop + fallback océano CSS
    ============================================================ */
+function pickHeroVideo() {
+  // Sin video si el usuario pidió ahorrar datos o reducir el movimiento: queda la foto de portada
+  if (navigator.connection?.saveData) return null;
+  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return null;
+  // En móvil, versión recortada en vertical (~0,75 MB en vez de ~2 MB)
+  return window.matchMedia("(max-width: 760px)").matches ? "/videos/hero-mobile.mp4" : "/videos/hero-desktop.mp4";
+}
+
 function HeroBg() {
+  const [src] = useState(pickHeroVideo);
   const [ready, setReady]   = useState(false);
   const [failed, setFailed] = useState(false);
 
   return (
-    <div style={{
-      position: "absolute", inset: 0, overflow: "hidden",
-      background: "#040e20 url('/images/hero-poster.jpg') center/cover no-repeat",
-    }}>
+    <div className="hero-bg">
       {/* Video: fade-in cuando el browser lo autoriza */}
-      <video
-        autoPlay loop muted playsInline
-        disablePictureInPicture
-        preload="auto"
-        onCanPlay={() => setReady(true)}
-        onPlay={()    => setReady(true)}
-        onError={()   => setFailed(true)}
-        style={{
-          position: "absolute", inset: 0,
-          width: "100%", height: "100%",
-          objectFit: "cover",
-          transform: "translateZ(0)",
-          opacity: ready ? 1 : 0,
-          transition: "opacity 1s ease",
-        }}
-      >
-        <source src="/videos/hero.mp4" type="video/mp4" />
-      </video>
+      {src && (
+        <video
+          autoPlay loop muted playsInline
+          disablePictureInPicture
+          preload="auto"
+          src={src}
+          onCanPlay={() => setReady(true)}
+          onPlay={()    => setReady(true)}
+          onError={()   => setFailed(true)}
+          style={{
+            position: "absolute", inset: 0,
+            width: "100%", height: "100%",
+            objectFit: "cover",
+            transform: "translateZ(0)",
+            opacity: ready ? 1 : 0,
+            transition: "opacity 1s ease",
+          }}
+        />
+      )}
 
       {/* OceanScene solo si el video falla del todo */}
       {failed && <OceanScene />}
@@ -55,7 +64,7 @@ function HeroBg() {
 
 /* ============================================================
    OceanScene — parallax + mouse tracking + partículas + rayos
-   (activo mientras no haya video en /public/videos/hero.mp4)
+   (respaldo si el video no carga; estilos en globals.css)
    ============================================================ */
 function OceanScene() {
   const ref = useRef(null);
@@ -120,196 +129,6 @@ function OceanScene() {
       </div>
 
       <div className="grain" />
-
-      <style>{`
-        /* ── Base ── */
-        .ocean {
-          position: absolute; inset: 0; overflow: hidden;
-          animation: oceanReveal 2s var(--ease-out) both;
-        }
-        @keyframes oceanReveal { from { opacity:0; } to { opacity:1; } }
-
-        /* ── Cielo (parallax en scroll + suave con mouse) ── */
-        .ocean .sky {
-          position: absolute; top: -25%; left: 0; right: 0; bottom: 0;
-          background: linear-gradient(180deg,
-            #020b18 0%, #062540 8%, #0a3a63 22%, #0f5d97 38%,
-            #2a8cc4 54%, #6fc0e6 72%, #bfe6f6 88%, #eaf6fc 100%
-          );
-          transform: translateY(calc(var(--scroll, 0px) * 0.28));
-        }
-
-        /* ── Rayos de luz solares ── */
-        .rays-outer {
-          position: absolute;
-          left: 50%; top: -12%;
-          width: 220%; height: 80%;
-          transform: translateX(-50%) translateY(calc(var(--scroll, 0px) * 0.12));
-          pointer-events: none;
-        }
-        .ocean .rays {
-          position: absolute; inset: 0;
-          transform-origin: 50% 40%;
-          background: repeating-conic-gradient(
-            from 0deg at 50% 40%,
-            rgba(255,240,180,.02) 0deg 5deg,
-            transparent 5deg 22deg
-          );
-          -webkit-mask-image: radial-gradient(ellipse 65% 65% at 50% 40%, black 5%, transparent 68%);
-          mask-image: radial-gradient(ellipse 65% 65% at 50% 40%, black 5%, transparent 68%);
-          animation: raysRotate 90s linear infinite;
-        }
-        @keyframes raysRotate { to { transform: rotate(360deg); } }
-
-        /* ── Sol con tracking de mouse ── */
-        .ocean .sun {
-          position: absolute;
-          left: 50%; top: 29%;
-          width: 380px; height: 380px;
-          /* CSS translate independiente: no interfiere con la animación */
-          translate: -50% -50%;
-          margin-left: calc((var(--mx, .5) - .5) * 30px);
-          margin-top: calc((var(--my, .5) - .5) * 14px);
-          background: radial-gradient(circle,
-            #fffff5 0%, rgba(255,248,215,.96) 7%,
-            rgba(255,236,170,.72) 22%, rgba(255,220,140,.28) 42%, transparent 65%
-          );
-          filter: blur(2px);
-          animation: sunPulse 10s ease-in-out infinite;
-        }
-
-        /* ── Corona del sol ── */
-        .ocean .corona {
-          position: absolute;
-          left: 50%; top: 29%;
-          width: 560px; height: 560px;
-          translate: -50% -50%;
-          margin-left: calc((var(--mx, .5) - .5) * 30px);
-          margin-top: calc((var(--my, .5) - .5) * 14px);
-          background: radial-gradient(circle,
-            transparent 17%, rgba(255,236,160,.055) 27%,
-            transparent 38%, rgba(255,220,130,.04) 50%, transparent 64%
-          );
-          animation: coronaPulse 14s ease-in-out infinite;
-          pointer-events: none;
-        }
-
-        @keyframes sunPulse {
-          0%,100% { opacity:.88; filter:blur(2px); }
-          50%      { opacity:1;   filter:blur(1px) brightness(1.09); }
-        }
-        @keyframes coronaPulse {
-          0%,100% { transform:scale(1);    opacity:.55; }
-          50%     { transform:scale(1.18); opacity:1;   }
-        }
-
-        /* ── Brillo en el horizonte ── */
-        .ocean .glow {
-          position: absolute; left:0; right:0; top:50%; height:180px;
-          background: radial-gradient(65% 100% at 50% 0%, rgba(255,190,80,.14), transparent 70%);
-          transform: translateY(calc(var(--scroll, 0px) * 0.14));
-          pointer-events: none;
-        }
-        .ocean .horizon-mist {
-          position: absolute; left:0; right:0; top:51%; height:55px;
-          background: linear-gradient(180deg, rgba(255,210,140,.08), transparent);
-          pointer-events: none;
-        }
-
-        /* ── Mar ── */
-        .ocean .sea {
-          position: absolute; left:0; right:0; bottom:0; height:44%;
-          background: linear-gradient(180deg,
-            #5bbddd 0%, #2285bb 18%, #116098 40%, #0a4680 66%, #051530 100%
-          );
-          overflow: hidden;
-          transform: translateY(calc(var(--scroll, 0px) * 0.04));
-        }
-
-        /* ── Destello del agua ── */
-        .ocean .shimmer {
-          position: absolute; inset: 0;
-          background: repeating-linear-gradient(
-            180deg, rgba(255,255,255,.11) 0 1.5px, rgba(255,255,255,0) 1.5px 8px
-          );
-          -webkit-mask-image: linear-gradient(180deg, black, transparent 65%);
-          mask-image: linear-gradient(180deg, black, transparent 65%);
-          animation: shimmer 5s linear infinite;
-          opacity: .5;
-        }
-        @keyframes shimmer { from { background-position:0 0; } to { background-position:0 20px; } }
-
-        /* ── Reflejo solar en el agua (sigue mouse) ── */
-        .ocean .sun-reflection {
-          position: absolute;
-          left: calc(50% + (var(--mx, .5) - .5) * 55px);
-          top: 0; bottom: 0;
-          width: 190px;
-          transform: translateX(-50%);
-          background: linear-gradient(180deg,
-            rgba(255,230,120,.24) 0%, rgba(255,230,120,.11) 40%,
-            rgba(255,230,120,.04) 70%, transparent
-          );
-          filter: blur(16px);
-          animation: reflectionWaver 9s ease-in-out infinite;
-        }
-        @keyframes reflectionWaver {
-          0%,100% { width:160px; opacity:.8; }
-          50%     { width:240px; opacity:1;  }
-        }
-
-        /* ── Olas ── */
-        .ocean .wave { position:absolute; left:-5%; width:110%; height:120px; }
-        .ocean .wave-back { top:0; height:100px; }
-        .ocean .wave-back path { fill: rgba(100,180,225,.06); }
-        .ocean .wave-1 { top:2%; animation: drift 14s ease-in-out infinite alternate; }
-        .ocean .wave-1 path { fill: rgba(255,255,255,.12); }
-        .ocean .wave-2 { top:9%; animation: drift 20s ease-in-out infinite alternate-reverse; }
-        .ocean .wave-2 path { fill: rgba(255,255,255,.09); }
-        .ocean .wave-3 { top:18%; animation: drift 26s ease-in-out infinite alternate; }
-        .ocean .wave-3 path { fill: rgba(5,25,50,.48); }
-        @keyframes drift { from{ transform:translateX(-4%); } to{ transform:translateX(4%); } }
-
-        /* ── Espuma en la orilla de las olas ── */
-        .ocean .foam {
-          position: absolute; left:-5%; width:110%; top:17%; height:12px;
-          background: repeating-linear-gradient(90deg,
-            transparent 0 18px, rgba(255,255,255,.13) 18px 44px,
-            transparent 44px 68px, rgba(255,255,255,.07) 68px 94px,
-            transparent 94px 128px
-          );
-          filter: blur(5px);
-          animation: drift 11s ease-in-out infinite alternate-reverse;
-        }
-
-        /* ── Partículas flotando desde el mar ── */
-        .ocean .particles { position:absolute; inset:0; pointer-events:none; overflow:hidden; }
-        .ocean .particle {
-          position: absolute;
-          width: 2px; height: 2px; border-radius: 50%;
-          background: rgba(255,255,255,.75);
-          bottom: calc(44% + 3%);
-          left: calc(var(--pi, 0) * 7.1% + 3%);
-          animation: particleFloat calc(4.5s + var(--pi, 0) * 0.65s) ease-in-out calc(var(--pi, 0) * 0.55s) infinite;
-          opacity: 0;
-        }
-        @keyframes particleFloat {
-          0%   { transform: translateY(0) scale(1); opacity:0; }
-          15%  { opacity:.7; }
-          65%  { opacity:.3; }
-          100% { transform: translateY(-58px) translateX(calc((var(--pi, 0) - 7) * 2.5px)) scale(.35); opacity:0; }
-        }
-
-        /* ── Textura de grano ── */
-        .ocean .grain {
-          position:absolute; inset:0; opacity:.075; pointer-events:none;
-          background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence baseFrequency='.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-        }
-
-        @media (prefers-reduced-motion: reduce) {
-          .ocean * { animation:none !important; transition:none !important; }
-        }
-      `}</style>
     </div>
   );
 }
@@ -317,7 +136,7 @@ function OceanScene() {
 /* ============================================================
    Hero — tipografía editorial escalonada
    ============================================================ */
-function Hero({ onSearch }) {
+function Hero({ onSearch, initial }) {
   return (
     <section style={{
       position: "relative",
@@ -370,7 +189,7 @@ function Hero({ onSearch }) {
 
         {/* Barra de búsqueda */}
         <div className="hero-rise" style={{ animationDelay: ".44s", display: "flex", justifyContent: "center", marginTop: 38 }}>
-          <SearchBar variant="hero" onSearch={onSearch} />
+          <SearchBar variant="hero" onSearch={onSearch} initial={initial} />
         </div>
 
         {/* Chips de confianza */}
@@ -407,183 +226,167 @@ function Hero({ onSearch }) {
 
 /* ============================================================
    PropertyCard — estilo Airbnb adaptado a la marca
+   Toda la tarjeta es un enlace real (se puede abrir en otra pestaña);
+   corazón, flechas y puntos quedan por encima.
    ============================================================ */
-function PropertyCard({ p, navigate, index = 0 }) {
-  const [fav, setFav] = useState(false);
+const FOTOS_TARJETA = 5;
+
+function PropertyCard({ p, href, onOpen, index = 0 }) {
+  const { isFav, toggle } = useFavorites();
+  const fav = isFav(p.id);
   const [favAnim, setFavAnim] = useState(false);
   const [img, setImg] = useState(0);
   const [ratingVal, ratingRef] = useCountUp(p.rating || 0, 1200, 2);
+  const touch = useRef(null);
+  const swiped = useRef(false);
+  const fotos = p.galeria.slice(0, FOTOS_TARJETA);
+  const go = (delta) => setImg(i => (i + delta + fotos.length) % fotos.length);
+
+  // Deslizar el dedo sobre la tarjeta cambia de foto (sin abrir el alojamiento)
+  const onTouchStart = (e) => { touch.current = { x: e.touches[0].clientX, y: e.touches[0].clientY }; swiped.current = false; };
+  const onTouchEnd = (e) => {
+    if (!touch.current) return;
+    const dx = e.changedTouches[0].clientX - touch.current.x;
+    const dy = e.changedTouches[0].clientY - touch.current.y;
+    if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy) * 1.5) { swiped.current = true; go(dx < 0 ? 1 : -1); }
+    touch.current = null;
+  };
+
+  function open(e) {
+    if (e.metaKey || e.ctrlKey || e.shiftKey || e.button === 1) return; // nueva pestaña: lo maneja el navegador
+    e.preventDefault();
+    if (swiped.current) { swiped.current = false; return; }
+    onOpen();
+  }
+
+  const stop = (fn) => (e) => { e.preventDefault(); e.stopPropagation(); fn(); };
 
   return (
-    <article className="reveal prop-card" style={{ transitionDelay: (index * 90) + "ms" }}>
-      <div onClick={() => navigate({ name: "property", id: p.id })} style={{ cursor: "pointer" }}>
+    <article className="reveal prop-card" style={{ transitionDelay: (index * 90) + "ms" }}
+      onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
 
-        {/* Imagen con crossfade al cambiar foto */}
-        <div style={{ position: "relative", overflow: "hidden", aspectRatio: "1.04" }} className="card-media">
+      {/* Imagen con crossfade al cambiar foto */}
+      <div style={{ position: "relative", overflow: "hidden", aspectRatio: "1.04" }} className="card-media">
 
-          {/* key={img} fuerza remount → fade-in + ligero zoom */}
-          <div key={img} style={{ position: "absolute", inset: 0, animation: "imgFadeIn .38s ease" }}>
-            <PropImage src={p.galeria[img]} alt={`${p.nombre} - foto ${img + 1}`} />
-          </div>
+        {/* key={img} fuerza remount → fade-in + ligero zoom */}
+        <div key={img} style={{ position: "absolute", inset: 0, animation: "imgFadeIn .38s ease" }}>
+          <PropImage src={fotos[img]} alt={`${p.nombre} - foto ${img + 1}`}
+            sizes="(max-width: 560px) 100vw, (max-width: 1180px) 50vw, 300px" />
+        </div>
 
-          {/* Overlay de amenidades — aparece al hover */}
-          <div className="card-overlay">
-            <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-              {p.amenities.slice(0, 3).map(a => (
-                <span key={a} style={{
-                  fontSize: 11, fontWeight: 600, color: "#fff",
-                  display: "inline-flex", gap: 5, alignItems: "center",
-                  background: "rgba(255,255,255,.15)", backdropFilter: "blur(4px)",
-                  padding: "4px 10px", borderRadius: 99,
-                }}>
-                  <Icon name={AMENIDADES[a].icon} size={12} /> {AMENIDADES[a].label}
-                </span>
-              ))}
-            </div>
-          </div>
-
-          {p.destacado && (
-            <span style={{
-              position: "absolute", top: 14, left: 14, zIndex: 4,
-              fontSize: 11.5, fontWeight: 700, letterSpacing: ".04em",
-              padding: "6px 13px", borderRadius: 99,
-              background: "rgba(255,255,255,.94)", color: "var(--blue-deep)",
-              display: "inline-flex", gap: 6, alignItems: "center",
-              boxShadow: "0 2px 12px rgba(12,38,56,.14)",
-            }}>
-              <Icon name="sparkle" size={13} style={{ color: "oklch(0.78 0.09 75)" }} />
-              Destacado
-            </span>
-          )}
-
-          {/* Corazón */}
-          <button
-            onClick={e => { e.stopPropagation(); setFav(f => !f); setFavAnim(true); }}
-            onAnimationEnd={() => setFavAnim(false)}
-            style={{
-              position: "absolute", top: 12, right: 12, zIndex: 4,
-              width: 38, height: 38, borderRadius: 99,
-              display: "grid", placeItems: "center", color: "#fff",
-              background: fav ? "var(--cyan)" : "rgba(12,38,56,.28)",
-              backdropFilter: "blur(4px)",
-              transition: favAnim ? "background .2s" : "transform .2s, background .2s",
-              animation: favAnim ? "heartPop .42s var(--ease-out) forwards" : "none",
-            }}
-          >
-            <Icon name="heart" size={19} style={{ fill: fav ? "#fff" : "none" }} />
-          </button>
-
-          {/* Indicadores de galería */}
-          <div style={{
-            position: "absolute", bottom: 12, left: 0, right: 0,
-            display: "flex", justifyContent: "center", gap: 6, zIndex: 4,
-          }}>
-            {p.galeria.slice(0, 5).map((_, i) => (
-              <button key={i} onClick={e => { e.stopPropagation(); setImg(i); }} aria-label={`Ver foto ${i + 1}`} style={{
-                width: i === img ? 8 : 6, height: i === img ? 8 : 6,
-                minHeight: 0, padding: 0, // anula el min-height táctil global de 44px
-                borderRadius: 99,
-                background: i === img ? "#fff" : "rgba(255,255,255,.52)",
-                transition: "all .2s",
-              }} />
+        {/* Overlay de amenidades — aparece al hover */}
+        <div className="card-overlay">
+          <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+            {p.amenities.slice(0, 3).map(a => (
+              <span key={a} style={{
+                fontSize: 11, fontWeight: 600, color: "#fff",
+                display: "inline-flex", gap: 5, alignItems: "center",
+                background: "rgba(255,255,255,.15)", backdropFilter: "blur(4px)",
+                padding: "4px 10px", borderRadius: 99,
+              }}>
+                <Icon name={AMENIDADES[a].icon} size={12} /> {AMENIDADES[a].label}
+              </span>
             ))}
           </div>
         </div>
 
-        {/* Info */}
-        <div style={{ padding: "14px 16px 18px" }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 10 }}>
-            <h3 style={{ fontSize: 16.5, fontWeight: 700, lineHeight: 1.2 }}>{p.nombre}</h3>
-            {/* Rating con contador animado (o "Nuevo" si aún no tiene reseñas) */}
-            {p.rating ? (
-              <span ref={ratingRef} style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 13.5, fontWeight: 600, flexShrink: 0, marginTop: 1 }}>
-                <Icon name="star" size={13} style={{ fill: "oklch(0.78 0.09 75)", stroke: "oklch(0.78 0.09 75)", strokeWidth: 0 }} />
-                {ratingVal.toFixed(2)}
-              </span>
-            ) : (
-              <span style={{ fontSize: 11.5, fontWeight: 700, letterSpacing: ".04em", padding: "3px 10px", borderRadius: 99, flexShrink: 0, background: "var(--paper-2)", color: "var(--blue-deep)" }}>
-                Nuevo
-              </span>
-            )}
-          </div>
-          <p style={{ color: "var(--muted)", fontSize: 14, marginTop: 5 }}>
-            {p.sector}, {p.ciudad}{p.piso ? ` · Piso ${p.piso}` : ""}
-          </p>
-          <p style={{ color: "var(--muted)", fontSize: 14 }}>
-            {p.hab} hab · {p.banos} baños · {p.huespedes} huésp.
-          </p>
-          <p style={{ marginTop: 10, fontSize: 14.5, display: "flex", alignItems: "baseline", gap: 5 }}>
-            {p.precio ? (
-              <>
-                <span style={{ fontFamily: "var(--serif)", fontStyle: "italic", fontSize: 13.5, color: "var(--muted)" }}>desde</span>
-                <strong style={{ fontSize: 17, fontFamily: "var(--mono)", letterSpacing: "-.01em" }}>
-                  {formatCOP(p.precio)}
-                </strong>
-                <span style={{ color: "var(--muted)", fontSize: 13 }}> / noche</span>
-              </>
-            ) : (
-              <>
-                <strong style={{ fontSize: 15.5 }}>Precio a consultar</strong>
-                <span style={{ color: "var(--muted)", fontSize: 13 }}>· según tu grupo</span>
-              </>
-            )}
-          </p>
+        {p.destacado && (
+          <span style={{
+            position: "absolute", top: 14, left: 14, zIndex: 4, pointerEvents: "none",
+            fontSize: 11.5, fontWeight: 700, letterSpacing: ".04em",
+            padding: "6px 13px", borderRadius: 99,
+            background: "rgba(255,255,255,.94)", color: "var(--blue-deep)",
+            display: "inline-flex", gap: 6, alignItems: "center",
+            boxShadow: "0 2px 12px rgba(12,38,56,.14)",
+          }}>
+            <Icon name="sparkle" size={13} style={{ color: "oklch(0.78 0.09 75)" }} />
+            Destacado
+          </span>
+        )}
+
+        {/* Corazón: se guarda en este navegador */}
+        <button
+          onClick={stop(() => { toggle(p.id); setFavAnim(true); })}
+          onAnimationEnd={() => setFavAnim(false)}
+          aria-label={fav ? `Quitar ${p.nombre} de guardados` : `Guardar ${p.nombre}`}
+          aria-pressed={fav}
+          className="card-fav"
+          style={{
+            background: fav ? "var(--cyan)" : "rgba(12,38,56,.28)",
+            transition: favAnim ? "background .2s" : "transform .2s, background .2s",
+            animation: favAnim ? "heartPop .42s var(--ease-out) forwards" : "none",
+          }}
+        >
+          <Icon name="heart" size={19} style={{ fill: fav ? "#fff" : "none" }} />
+        </button>
+
+        {/* Flechas (solo con mouse) */}
+        {fotos.length > 1 && (
+          <>
+            <button className="card-nav prev" onClick={stop(() => go(-1))} aria-label="Foto anterior"><Icon name="chevL" size={16} stroke={2.2} /></button>
+            <button className="card-nav next" onClick={stop(() => go(1))} aria-label="Foto siguiente"><Icon name="chevR" size={16} stroke={2.2} /></button>
+          </>
+        )}
+
+        {/* Indicadores de galería */}
+        <div style={{
+          position: "absolute", bottom: 12, left: 0, right: 0,
+          display: "flex", justifyContent: "center", gap: 6, zIndex: 4, pointerEvents: "none",
+        }}>
+          {fotos.map((_, i) => (
+            <button key={i} onClick={stop(() => setImg(i))} aria-label={`Ver foto ${i + 1}`} style={{
+              width: i === img ? 8 : 6, height: i === img ? 8 : 6,
+              minHeight: 0, padding: 0, // anula el min-height táctil global de 44px
+              borderRadius: 99, pointerEvents: "auto",
+              background: i === img ? "#fff" : "rgba(255,255,255,.52)",
+              transition: "all .2s",
+            }} />
+          ))}
         </div>
       </div>
 
+      {/* Info */}
+      <div style={{ padding: "14px 16px 18px" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 10 }}>
+          <h3 style={{ fontSize: 16.5, fontWeight: 700, lineHeight: 1.2 }}>
+            <a href={href} onClick={open} className="card-link">{p.nombre}</a>
+          </h3>
+          {/* Rating con contador animado (o "Nuevo" si aún no tiene reseñas) */}
+          {p.rating ? (
+            <span ref={ratingRef} style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 13.5, fontWeight: 600, flexShrink: 0, marginTop: 1 }}>
+              <Icon name="star" size={13} style={{ fill: "oklch(0.78 0.09 75)", stroke: "oklch(0.78 0.09 75)", strokeWidth: 0 }} />
+              {ratingVal.toFixed(2)}
+            </span>
+          ) : (
+            <span style={{ fontSize: 11.5, fontWeight: 700, letterSpacing: ".04em", padding: "3px 10px", borderRadius: 99, flexShrink: 0, background: "var(--paper-2)", color: "var(--blue-deep)" }}>
+              Nuevo
+            </span>
+          )}
+        </div>
+        <p style={{ color: "var(--muted)", fontSize: 14, marginTop: 5 }}>
+          {p.sector}, {p.ciudad}{p.piso ? ` · Piso ${p.piso}` : ""}
+        </p>
+        <p style={{ color: "var(--muted)", fontSize: 14 }}>
+          {p.hab} hab · {p.banos} baños · {p.huespedes} huésp.
+        </p>
+        <p style={{ marginTop: 10, fontSize: 14.5, display: "flex", alignItems: "baseline", gap: 5 }}>
+          {p.precio ? (
+            <>
+              <span style={{ fontFamily: "var(--serif)", fontStyle: "italic", fontSize: 13.5, color: "var(--muted)" }}>desde</span>
+              <strong style={{ fontSize: 17, fontFamily: "var(--mono)", letterSpacing: "-.01em" }}>
+                {formatCOP(p.precio)}
+              </strong>
+              <span style={{ color: "var(--muted)", fontSize: 13 }}> / noche</span>
+            </>
+          ) : (
+            <>
+              <strong style={{ fontSize: 15.5 }}>Precio a consultar</strong>
+              <span style={{ color: "var(--muted)", fontSize: 13 }}>· según tu grupo</span>
+            </>
+          )}
+        </p>
+      </div>
     </article>
-  );
-}
-
-/* ============================================================
-   Botón flotante de WhatsApp
-   ============================================================ */
-function FloatingWA() {
-  const [visible, setVisible] = useState(false);
-  useEffect(() => {
-    // En móvil (sin botón en nav) siempre visible; en desktop aparece tras scroll
-    const isMobile = () => window.innerWidth <= 880;
-    const check = () => setVisible(isMobile() || window.scrollY > window.innerHeight * 0.8);
-    check();
-    window.addEventListener("scroll", check, { passive: true });
-    window.addEventListener("resize", check, { passive: true });
-    return () => {
-      window.removeEventListener("scroll", check);
-      window.removeEventListener("resize", check);
-    };
-  }, []);
-
-  if (!visible) return null;
-  return (
-    <>
-      <a
-        href={waLink("Hola INNOVARE JM 👋")}
-        target="_blank" rel="noopener"
-        aria-label="Contactar por WhatsApp"
-        className="floating-wa"
-        style={{
-          position: "fixed", bottom: 28, right: 28, zIndex: 90,
-          width: 58, height: 58, borderRadius: 99,
-          background: "#25D366", color: "#06371b",
-          display: "grid", placeItems: "center",
-          boxShadow: "0 6px 22px rgba(37,211,102,.5), 0 2px 8px rgba(0,0,0,.18)",
-          animation: "waFadeIn .4s var(--ease-out)",
-          transition: "transform .25s var(--ease), box-shadow .25s var(--ease)",
-          textDecoration: "none",
-        }}
-        onMouseEnter={e => {
-          e.currentTarget.style.transform = "scale(1.1) translateY(-3px)";
-          e.currentTarget.style.boxShadow = "0 12px 32px rgba(37,211,102,.55), 0 3px 10px rgba(0,0,0,.2)";
-        }}
-        onMouseLeave={e => {
-          e.currentTarget.style.transform = "scale(1)";
-          e.currentTarget.style.boxShadow = "0 6px 22px rgba(37,211,102,.5), 0 2px 8px rgba(0,0,0,.18)";
-        }}
-      >
-        <Icon name="wa" size={26} />
-      </a>
-      <style>{`@keyframes waFadeIn { from { opacity:0; transform:scale(.75); } to { opacity:1; transform:scale(1); } }`}</style>
-    </>
   );
 }
 
@@ -592,37 +395,58 @@ function FloatingWA() {
    ============================================================ */
 export function Home({ navigate, route }) {
   const ref = useReveal();
+  const { favorites } = useFavorites();
   const [filter, setFilter] = useState(route?.dest || "Todos");
 
   // Permite filtrar desde fuera (ej. enlaces de destinos del footer)
   useEffect(() => { if (route?.dest) setFilter(route.dest); }, [route]);
+  // Si se vacían los guardados, vuelve a "Todos"
+  useEffect(() => { if (filter === "Guardados" && favorites.length === 0) setFilter("Todos"); }, [filter, favorites.length]);
+
+  // Búsqueda del hero sin alojamiento elegido: filtra por capacidad y por fechas libres
+  const search = route?.booking || null;
+  const sRange = search?.range;
+  const hasDates = !!(sRange?.start && sRange?.end);
+  const sGuests = search ? search.guests.adultos + search.guests.ninos : 0;
+  const { map: avail, loading: loadingAvail } = useAvailabilityMap(PROPERTIES.map(p => p.id), hasDates);
 
   const ciudades = ["Todos", ...new Set(PROPERTIES.map(p => p.ciudad))];
-  const list = filter === "Todos" ? PROPERTIES : PROPERTIES.filter(p => p.ciudad === filter);
+  let list = filter === "Todos" ? PROPERTIES
+    : filter === "Guardados" ? PROPERTIES.filter(p => favorites.includes(p.id))
+    : PROPERTIES.filter(p => p.ciudad === filter);
+  if (search) {
+    list = list.filter(p => p.huespedes >= sGuests);
+    // Si no se pudo verificar un calendario, el alojamiento se muestra igual (se confirma por WhatsApp)
+    if (hasDates) list = list.filter(p => !avail[p.id] || isRangeAvailable(sRange.start, sRange.end, avail[p.id].blockedRanges));
+  }
+
   const destinos = Object.entries(DESTINOS)
     .map(([c, x]) => ({ c, ...x, n: PROPERTIES.filter(p => p.ciudad === c).length }))
     .filter(x => x.n > 0);
 
+  const openProperty = (p) => navigate({ name: "property", id: p.id, booking: search });
+  const clearSearch = () => navigate({ name: "home" }, "#listado");
+
   return (
     <main ref={ref}>
-      <Hero onSearch={(s) => {
+      <Hero initial={search ? { range: search.range, guests: search.guests } : undefined} onSearch={(s) => {
+        const booking = { range: s.range, guests: s.guests };
         if (s.propertyId) {
-          // Navega directo al apartamento seleccionado
-          navigate({ name: "property", id: s.propertyId });
+          // Navega directo al alojamiento elegido, con las fechas y huéspedes ya puestos
+          navigate({ name: "property", id: s.propertyId, booking });
         } else {
-          // Sin selección: muestra todos y baja al listado
-          navigate({ name: "home" });
+          // Sin selección: muestra los que tienen cupo y fechas libres
           setFilter("Todos");
-          setTimeout(() => document.getElementById("listado")?.scrollIntoView({ behavior: "smooth" }), 60);
+          navigate({ name: "home", booking }, "#listado");
         }
       }} />
 
       {/* ─── LISTADO ─── */}
-      <section id="listado" style={{ paddingBlock: "88px 76px" }}>
+      <section id="listado" style={{ paddingBlock: "88px 76px", scrollMarginTop: 40 }}>
         <div className="wrap">
           <div className="reveal" style={{
             display: "flex", justifyContent: "space-between",
-            alignItems: "flex-end", flexWrap: "wrap", gap: 20, marginBottom: 34,
+            alignItems: "flex-end", flexWrap: "wrap", gap: 20, marginBottom: search ? 20 : 34,
           }}>
             <div>
               <span className="eyebrow">Nuestros alojamientos</span>
@@ -632,19 +456,57 @@ export function Home({ navigate, route }) {
               </h2>
             </div>
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-              {ciudades.map(c => (
-                <button key={c} onClick={() => setFilter(c)} className="chip" style={{
+              {[...ciudades, ...(favorites.length ? ["Guardados"] : [])].map(c => (
+                <button key={c} onClick={() => setFilter(c)} className="chip" aria-pressed={filter === c} style={{
                   background: filter === c ? "var(--ink)" : "#fff",
                   color: filter === c ? "#fff" : "var(--ink-2)",
                   borderColor: filter === c ? "var(--ink)" : "var(--line-strong)",
                   padding: "10px 18px", fontWeight: 600,
-                }}>{c}</button>
+                }}>
+                  {c === "Guardados" && <Icon name="heart" size={14} style={{ fill: "currentColor" }} />}
+                  {c === "Guardados" ? `Guardados (${favorites.length})` : c}
+                </button>
               ))}
             </div>
           </div>
-          <div className="grid-cards">
-            {list.map((p, i) => <PropertyCard key={p.id} p={p} navigate={navigate} index={i} />)}
-          </div>
+
+          {search && (
+            <div className="search-summary">
+              <Icon name="search" size={16} />
+              <span>
+                <strong>{hasDates ? `${fmtFecha(sRange.start)} – ${fmtFecha(sRange.end)}` : "Cualquier fecha"}</strong>
+                {" · "}{huespedesTxt(search.guests)}
+                {loadingAvail && <span style={{ color: "var(--muted)" }}> · verificando disponibilidad…</span>}
+              </span>
+              <button onClick={clearSearch} className="search-clear">
+                Limpiar búsqueda <Icon name="close" size={14} />
+              </button>
+            </div>
+          )}
+
+          {list.length > 0 ? (
+            <div className="grid-cards">
+              {list.map((p, i) => (
+                <PropertyCard key={p.id} p={p} index={i}
+                  href={routeToUrl({ name: "property", id: p.id, booking: search })}
+                  onOpen={() => openProperty(p)} />
+              ))}
+            </div>
+          ) : (
+            <div className="empty-results">
+              <h3 style={{ fontSize: 20, fontWeight: 700 }}>No encontramos alojamientos con esos criterios</h3>
+              <p style={{ color: "var(--muted)", marginTop: 8 }}>
+                Prueba otras fechas o escríbenos y te ayudamos a encontrar una alternativa.
+              </p>
+              <div style={{ display: "flex", gap: 10, justifyContent: "center", marginTop: 20, flexWrap: "wrap" }}>
+                <a className="btn btn-wa" target="_blank" rel="noopener noreferrer"
+                  href={waLink(`Hola INNOVARE JM, busco alojamiento${hasDates ? ` del ${fmtFecha(sRange.start)} al ${fmtFecha(sRange.end)}` : ""} para ${huespedesTxt(search?.guests || { adultos: 2, ninos: 0, bebes: 0 })}. ¿Qué opciones tienen?`)}>
+                  <Icon name="wa" size={18} /> Escríbenos
+                </a>
+                <button className="btn btn-line" onClick={() => { setFilter("Todos"); clearSearch(); }}>Ver todos</button>
+              </div>
+            </div>
+          )}
         </div>
       </section>
 
@@ -666,7 +528,7 @@ export function Home({ navigate, route }) {
                 className="dest-card"
                 style={{ position: "relative", borderRadius: 24, overflow: "hidden", textAlign: "left", color: "#fff" }}
               >
-                <PropImage src={x.img} alt={x.label} />
+                <PropImage src={x.img} alt={x.label} sizes="(max-width: 900px) 100vw, 420px" />
                 <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(8,40,70,0) 35%, rgba(8,40,70,.8))" }} />
                 <div style={{ position: "absolute", left: 26, bottom: 24, zIndex: 2 }}>
                   <div style={{ fontSize: 30, fontWeight: 800, letterSpacing: "-.02em", lineHeight: 1 }}>{x.c}</div>
@@ -708,13 +570,13 @@ export function Home({ navigate, route }) {
                 </span>
               </h2>
               <p style={{ marginTop: 18, fontSize: 15.5, color: "rgba(255,255,255,.6)", lineHeight: 1.72, maxWidth: 360 }}>
-                Sin plataformas de por medio. Tu estancia, directamente con quienes cuidan los apartamentos.
+                Sin plataformas de por medio. Tu estancia, directamente con quienes cuidan los alojamientos.
               </p>
               <a
                 className="btn btn-wa"
                 style={{ marginTop: 32 }}
                 href={waLink("Hola INNOVARE JM, quiero saber más sobre disponibilidad.")}
-                target="_blank" rel="noopener"
+                target="_blank" rel="noopener noreferrer"
               >
                 <Icon name="wa" size={18} /> Escríbenos
               </a>
@@ -775,7 +637,7 @@ export function Home({ navigate, route }) {
               <div style={{ display: "flex", gap: 12, justifyContent: "center", marginTop: 32, flexWrap: "wrap" }}>
                 <a className="btn btn-wa"
                   href={waLink("Hola INNOVARE JM, quiero hacer una reserva. ¿Me ayudan con la disponibilidad?")}
-                  target="_blank" rel="noopener">
+                  target="_blank" rel="noopener noreferrer">
                   <Icon name="wa" size={19} /> Escríbenos por WhatsApp
                 </a>
                 <button className="btn" style={{ background: "rgba(255,255,255,.16)", color: "#fff", border: "1px solid rgba(255,255,255,.4)" }}
@@ -787,9 +649,6 @@ export function Home({ navigate, route }) {
           </div>
         </div>
       </section>
-
-      {/* Botón flotante de WhatsApp */}
-      <FloatingWA />
 
     </main>
   );

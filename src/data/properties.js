@@ -24,9 +24,9 @@ export const AMENIDADES = {
 
 // Texto e imagen de cada destino en la sección "Dónde te esperamos"
 export const DESTINOS = {
-  "Cartagena":   { d: "El Laguito · frente a la bahía",  img: "/images/cartagena-1601/01.jpg", label: "Vista al mar desde Bocagrande" },
-  "Santa Marta": { d: "Donde la sierra abraza el mar",   img: "/images/santamarta-901/01.jpg", label: "Bahía de Santa Marta" },
-  "Darién":      { d: "Lago Calima · Valle del Cauca",   img: "/images/darien/01.jpg",         label: "Finca junto al Lago Calima" },
+  "Cartagena":   { d: "El Laguito · frente a la bahía",  img: "/images/cartagena-1601/01.jpg", label: "Vista al mar desde Bocagrande", region: "Bolívar" },
+  "Santa Marta": { d: "Donde la sierra abraza el mar",   img: "/images/santamarta-901/01.jpg", label: "Bahía de Santa Marta",          region: "Magdalena" },
+  "Darién":      { d: "Lago Calima · Valle del Cauca",   img: "/images/darien/01.jpg",         label: "Finca junto al Lago Calima",    region: "Valle del Cauca" },
 };
 
 // "/images/<carpeta>/01.jpg" … "/images/<carpeta>/NN.jpg"

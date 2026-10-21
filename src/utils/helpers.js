@@ -15,6 +15,23 @@ export function fmtFecha(d) {
   return d.getDate() + " " + MESES_AB[d.getMonth()];
 }
 
+// Fecha local ⇄ "YYYY-MM-DD" (para la URL)
+export function toISODate(d) {
+  if (!d) return "";
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+export function fromISODate(s) {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s || "");
+  if (!m) return null;
+  const d = new Date(+m[1], +m[2] - 1, +m[3]);
+  return isNaN(d) ? null : d;
+}
+
+export function huespedesTxt(g) {
+  const total = g.adultos + g.ninos;
+  return `${total} huésped${total > 1 ? "es" : ""}${g.bebes ? `, ${g.bebes} bebé${g.bebes > 1 ? "s" : ""}` : ""}`;
+}
+
 // Returns { subtotal, rows } where rows = [{ count, price, label }]
 // Weekend nights = Fri/Sat/Sun; uses precioFinde when defined.
 export function calcSubtotal(start, end, precio, precioFinde) {

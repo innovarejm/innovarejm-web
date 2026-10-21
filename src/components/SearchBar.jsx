@@ -2,8 +2,9 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { Icon } from '../icons/Icon';
 import { RangeCalendar } from './RangeCalendar';
 import { GuestPicker } from './GuestPicker';
-import { fmtFecha } from '../utils/helpers';
+import { fmtFecha, huespedesTxt } from '../utils/helpers';
 import { PROPERTIES } from '../data/properties';
+import { useAvailability } from '../hooks/useAvailability';
 
 const DEFAULT_RANGE  = { start: null, end: null };
 const DEFAULT_GUESTS = { adultos: 2, ninos: 0, bebes: 0 };
@@ -85,6 +86,8 @@ export function SearchBar({ variant = "hero", onSearch, initial }) {
 
   const selectedProp = PROPERTIES.find(p => p.id === selectedId) || null;
   const maxGuests = selectedProp ? selectedProp.huespedes : Math.max(...PROPERTIES.map(p => p.huespedes));
+  // Con un alojamiento elegido, el calendario muestra sus fechas ocupadas
+  const { blockedRanges } = useAvailability(selectedId);
   const totalG = guests.adultos + guests.ninos;
   const dark = variant === "hero";
 
@@ -116,6 +119,22 @@ export function SearchBar({ variant = "hero", onSearch, initial }) {
             Elige un alojamiento
           </p>
           <div style={{ display: "grid", gap: 4 }}>
+            <button onClick={() => { setSelectedId(null); toggle("in"); }}
+              className="prop-option"
+              style={{
+                display: "flex", alignItems: "center", gap: 14, padding: "12px 14px", borderRadius: 14,
+                textAlign: "left", width: "100%",
+                background: selectedId === null ? "var(--paper-2)" : "transparent",
+                transition: "background .15s",
+              }}>
+              <span style={{ width: 42, height: 42, borderRadius: 12, background: "var(--paper-2)", border: "1px solid var(--line)", display: "grid", placeItems: "center", color: "var(--blue)", flexShrink: 0 }}>
+                <Icon name="grid" size={19} />
+              </span>
+              <div style={{ minWidth: 0 }}>
+                <div style={{ fontWeight: 700, fontSize: 14, color: "var(--ink)", lineHeight: 1.2 }}>Cualquier alojamiento</div>
+                <div style={{ fontSize: 12.5, color: "var(--muted)", marginTop: 2 }}>Ver todos los disponibles</div>
+              </div>
+            </button>
             {PROPERTIES.map(p => (
               <button key={p.id} onClick={() => { setSelectedId(p.id); toggle("in"); }}
                 className="prop-option"
@@ -142,7 +161,7 @@ export function SearchBar({ variant = "hero", onSearch, initial }) {
       <Seg id="in" label="Llegada" value={range.start ? fmtFecha(range.start) : ""}
            dark={dark} field={field} onToggle={toggle}>
         <Popover open={field === "in"} onClose={close} width={340} align="left">
-          <RangeCalendar range={range} onChange={(r) => { setRange(r); if (r.start && r.end) toggle("guests"); }} />
+          <RangeCalendar range={range} blockedRanges={blockedRanges} onChange={(r) => { setRange(r); if (r.start && r.end) toggle("guests"); }} />
         </Popover>
       </Seg>
 
@@ -150,13 +169,13 @@ export function SearchBar({ variant = "hero", onSearch, initial }) {
       <Seg id="out" label="Salida" value={range.end ? fmtFecha(range.end) : ""}
            dark={dark} field={field} onToggle={toggle}>
         <Popover open={field === "out"} onClose={close} width={340} align="left">
-          <RangeCalendar range={range} onChange={(r) => { setRange(r); if (r.start && r.end) toggle("guests"); }} />
+          <RangeCalendar range={range} blockedRanges={blockedRanges} onChange={(r) => { setRange(r); if (r.start && r.end) toggle("guests"); }} />
         </Popover>
       </Seg>
 
       <Divider />
       <Seg id="guests" label="Huéspedes"
-        value={totalG ? `${totalG} huésped${totalG > 1 ? "es" : ""}${guests.bebes ? " · " + guests.bebes + " bebé" + (guests.bebes > 1 ? "s" : "") : ""}` : ""}
+        value={totalG ? huespedesTxt(guests) : ""}
         grow dark={dark} field={field} onToggle={toggle}>
         <Popover open={field === "guests"} onClose={close} width={320} align="right">
           <GuestPicker value={guests} onChange={setGuests} max={maxGuests} />
