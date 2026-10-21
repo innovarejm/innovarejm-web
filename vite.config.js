@@ -56,7 +56,7 @@ function seoPages() {
           '@type': 'Organization',
           name: 'INNOVARE JM',
           url: abs('/'),
-          logo: abs('/uploads/LOGO%20INNOVARE.png'),
+          logo: abs('/brand/logo-square.jpg'),
           sameAs: [CONTACT.instagramUrl],
           contactPoint: { '@type': 'ContactPoint', telephone: '+' + CONTACT.whatsapp, contactType: 'reservations', availableLanguage: ['es'] },
         },

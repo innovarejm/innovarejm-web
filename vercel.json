@@ -1,7 +1,7 @@
 {
   "cleanUrls": true,
   "rewrites": [
-    { "source": "/((?!api/|assets/|images/|videos/|uploads/).*)", "destination": "/index.html" }
+    { "source": "/((?!api/|assets/|images/|videos/|uploads/|brand/).*)", "destination": "/index.html" }
   ],
   "headers": [
     {

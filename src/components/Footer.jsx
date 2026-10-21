@@ -14,11 +14,7 @@ export function Footer({ navigate }) {
         opacity: .045, pointerEvents: "none",
         transform: "rotate(12deg)",
       }}>
-        <svg width="520" height="385" viewBox="0 0 64 48" fill="none" aria-hidden="true">
-          <path d="M3 46 L20 4 L32 26 L27 35 L20 21 L13 34 L3 46 Z" fill="white"/>
-          <path d="M44 4 L61 46 L51 46 L44 33 L37 46 L32 38 L44 4 Z" fill="white"/>
-          <path d="M32 18 L36 26 L32 33 L28 26 Z" fill="white"/>
-        </svg>
+        <img src="/brand/logo-mark-white.png" alt="" aria-hidden="true" loading="lazy" style={{ width: 520, height: "auto", display: "block" }} />
       </div>
       <div className="wrap">
         <div style={{ display: "grid", gridTemplateColumns: "1.6fr 1fr 1fr 1.2fr", gap: 40 }} className="foot-grid">

@@ -622,11 +622,7 @@ export function Home({ navigate, route }) {
             }} />
             {/* Marca de agua del logo */}
             <div style={{ position: "absolute", right: -20, bottom: -30, opacity: .09, pointerEvents: "none", transform: "rotate(-8deg)" }}>
-              <svg width="260" height="194" viewBox="0 0 64 48" fill="none">
-                <path d="M3 46 L20 4 L32 26 L27 35 L20 21 L13 34 L3 46 Z" fill="white"/>
-                <path d="M44 4 L61 46 L51 46 L44 33 L37 46 L32 38 L44 4 Z" fill="white"/>
-                <path d="M32 18 L36 26 L32 33 L28 26 Z" fill="white"/>
-              </svg>
+              <img src="/brand/logo-mark-white.png" alt="" aria-hidden="true" loading="lazy" style={{ width: 300, height: "auto", display: "block" }} />
             </div>
             <div style={{ position: "relative" }}>
               <h2 style={{ fontSize: "clamp(26px,4vw,48px)", lineHeight: 1.05 }}>

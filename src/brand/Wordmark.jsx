@@ -1,36 +1,39 @@
-export function Mark({ size = 34 }) {
-  const id = "mg" + Math.random().toString(36).slice(2, 7);
+/*
+ * Logo oficial de INNOVARE JM. Las imágenes salen de public/uploads/LOGO INNOVARE.png
+ * con scripts/build-logo.mjs (símbolo y texto por separado para la versión horizontal).
+ */
+const MARK_RATIO = 238 / 132; // ancho / alto de /brand/logo-mark.png
+const TEXT_RATIO = 319 / 96;  // ancho / alto de /brand/logo-text*.png
+
+export function Mark({ size = 34, white = false, style }) {
   return (
-    <svg width={size} height={size * 0.74} viewBox="0 0 64 48" fill="none" aria-hidden="true">
-      <defs>
-        <linearGradient id={id} x1="0" y1="48" x2="34" y2="2" gradientUnits="userSpaceOnUse">
-          <stop stopColor="#52c2ee"/><stop offset="1" stopColor="#0A5BAE"/>
-        </linearGradient>
-      </defs>
-      <path d="M3 46 L20 4 L32 26 L27 35 L20 21 L13 34 L3 46 Z" fill={`url(#${id})`}/>
-      <path d="M44 4 L61 46 L51 46 L44 33 L37 46 L32 38 L44 4 Z" fill="#7e858b"/>
-      <path d="M32 18 L36 26 L32 33 L28 26 Z" fill="#0A5BAE"/>
-    </svg>
+    <img
+      src={white ? "/brand/logo-mark-white.png" : "/brand/logo-mark.png"}
+      alt="" aria-hidden="true" decoding="async"
+      width={Math.round(size * MARK_RATIO)} height={size}
+      style={{ display: "block", height: size, width: "auto", ...style }}
+    />
   );
 }
 
+/* Versión horizontal: símbolo + "INNOVARE JM / INMOBILIER".
+   `light` = texto blanco (sobre el video del hero o fondos oscuros). */
 export function Wordmark({ light = false, size = 1 }) {
+  const h = 44 * size;          // alto del símbolo
+  const th = Math.round(h * 0.78); // alto del bloque de texto
+  const tw = Math.round(th * TEXT_RATIO);
+  const textImg = (src, visible) => (
+    <img src={src} alt="" aria-hidden="true" decoding="async" width={tw} height={th}
+      style={{ position: visible === null ? "static" : "absolute", inset: 0, display: "block", height: th, width: tw,
+        opacity: visible === false ? 0 : 1, transition: "opacity .4s var(--ease)" }} />
+  );
   return (
-    <span style={{ display: "inline-flex", alignItems: "center", gap: 11 * size }}>
-      <Mark size={34 * size} />
-      <span style={{ lineHeight: .96, display: "flex", flexDirection: "column", whiteSpace: "nowrap" }}>
-        <span style={{
-          fontWeight: 800, fontSize: 19 * size, letterSpacing: ".02em", whiteSpace: "nowrap",
-          color: light ? "#fff" : "var(--ink)",
-        }}>
-          INNOVARE <span style={{ color: light ? "#fff" : "var(--ink)" }}>JM</span>
-        </span>
-        <span style={{
-          fontFamily: "var(--mono)", fontSize: 9.5 * size, letterSpacing: ".42em",
-          color: light ? "rgba(255,255,255,.8)" : "var(--blue)", marginTop: 2, paddingLeft: 1,
-        }}>
-          INMOBILIER
-        </span>
+    <span role="img" aria-label="INNOVARE JM Inmobilier" style={{ display: "inline-flex", alignItems: "center", gap: Math.round(10 * size) }}>
+      <Mark size={h} />
+      {/* Las dos versiones del texto quedan cargadas y se cruzan con un fundido al hacer scroll */}
+      <span style={{ position: "relative", display: "block", width: tw, height: th }}>
+        {textImg("/brand/logo-text.png", !light)}
+        {textImg("/brand/logo-text-light.png", light)}
       </span>
     </span>
   );
