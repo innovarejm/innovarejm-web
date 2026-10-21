@@ -7,7 +7,7 @@ import { useCountUp } from '../hooks/useCountUp';
 import { useFavorites } from '../hooks/useFavorites';
 import { useAvailabilityMap, isRangeAvailable } from '../hooks/useAvailability';
 import { PROPERTIES, AMENIDADES, DESTINOS, waLink } from '../data/properties';
-import { formatCOP, fmtFecha, huespedesTxt } from '../utils/helpers';
+import { formatCOP, fmtFecha, huespedesTxt, toISODate } from '../utils/helpers';
 import { routeToUrl } from '../router';
 
 /* ============================================================
@@ -189,7 +189,9 @@ function Hero({ onSearch, initial }) {
 
         {/* Barra de búsqueda */}
         <div className="hero-rise" style={{ animationDelay: ".44s", display: "flex", justifyContent: "center", marginTop: 38 }}>
-          <SearchBar variant="hero" onSearch={onSearch} initial={initial} />
+          {/* key: al limpiar la búsqueda el buscador vuelve a quedar vacío */}
+          <SearchBar variant="hero" onSearch={onSearch} initial={initial}
+            key={initial ? `${toISODate(initial.range?.start)}_${toISODate(initial.range?.end)}_${huespedesTxt(initial.guests)}` : "vacio"} />
         </div>
 
         {/* Chips de confianza */}

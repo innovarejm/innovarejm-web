@@ -83,7 +83,8 @@ export function App() {
         {route.name === "notfound" && <NotFound navigate={navigate} />}
       </Suspense>
       <Footer navigate={navigate} />
-      <FloatingWA delayOnScroll={route.name === "home"} />
+      {/* En el checkout sobra (toda la página ya termina en WhatsApp) y taparía el botón de envío */}
+      {route.name !== "checkout" && <FloatingWA delayOnScroll={route.name === "home"} />}
     </>
   );
 }

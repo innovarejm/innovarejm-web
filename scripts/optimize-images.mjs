@@ -8,7 +8,16 @@
 import { stat } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import sharp from 'sharp';
+
+// Si sharp no está disponible, no se bloquea el build: las versiones ya generadas están
+// en el repositorio y la web usa el JPG original cuando falta alguna.
+let sharp;
+try {
+  sharp = (await import('sharp')).default;
+} catch (err) {
+  console.warn(`[images] sharp no disponible (${err.message}); se omite la optimización.`);
+  process.exit(0);
+}
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const PUBLIC = path.join(ROOT, 'public');
