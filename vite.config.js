@@ -1,6 +1,5 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
-import tailwindcss from '@tailwindcss/vite'
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs'
 import path from 'node:path'
 import { PROPERTIES, DESTINOS, CONTACT } from './src/data/properties.js'
@@ -117,7 +116,7 @@ function seoPages() {
 }
 
 export default defineConfig({
-  plugins: [react(), tailwindcss(), seoPages()],
+  plugins: [react(), seoPages()],
   build: {
     rollupOptions: {
       output: {

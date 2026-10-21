@@ -129,15 +129,13 @@ function LocationMap({ p }) {
         color: "#fff", boxShadow: "var(--sh-md)", border: "3px solid #fff" }}>
         <Icon name={p.ciudad === "Darién" ? "tree" : "sea"} size={20} />
       </div>
-      {/* Arriba, para no tapar la atribución de OpenStreetMap (abajo) */}
-      <span style={{ position: "absolute", left: 14, top: 14, fontSize: 12, fontWeight: 600,
-        color: "var(--blue-deep)", background: "rgba(255,255,255,.92)", padding: "6px 12px", borderRadius: 99, boxShadow: "var(--sh-sm)" }}>
-        Ubicación aproximada
-      </span>
+      {/* Todo el mapa abre Google Maps (el iframe no es interactivo para no secuestrar el scroll).
+          La etiqueta va arriba para no tapar la atribución de OpenStreetMap. */}
       <a href={`https://www.google.com/maps/search/?api=1&query=${lat},${lng}`} target="_blank" rel="noopener noreferrer"
-        style={{ position: "absolute", right: 14, top: 14, fontSize: 12.5, fontWeight: 600, color: "var(--ink)",
-          background: "#fff", padding: "8px 14px", borderRadius: 99, boxShadow: "var(--sh-md)", display: "inline-flex", gap: 6, alignItems: "center" }}>
-        <Icon name="map" size={15} /> Abrir en Google Maps
+        aria-label={`Abrir la zona de ${p.sector}, ${p.ciudad} en Google Maps`} className="map-link">
+        <span className="map-chip">
+          <Icon name="map" size={15} /> Ubicación aproximada · <u>Abrir mapa</u>
+        </span>
       </a>
     </div>
   );
