@@ -22,7 +22,7 @@ export function PropImage({ src, alt = "Foto del apartamento", style, className,
       }}
       className={className}
       loading={priority ? "eager" : "lazy"}
-      fetchPriority={priority ? "high" : "auto"}
+      fetchpriority={priority ? "high" : "auto"}
     />
   );
 }

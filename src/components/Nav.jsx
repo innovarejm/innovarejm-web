@@ -16,7 +16,7 @@ export function Nav({ navigate, route, transparentTop = false }) {
 
   const light = transparentTop && !scrolled;
   const links = [
-    { t: "Apartamentos", go: () => navigate({ name: "home" }, "#listado") },
+    { t: "Alojamientos", go: () => navigate({ name: "home" }, "#listado") },
     { t: "Destinos",     go: () => navigate({ name: "home" }, "#destinos") },
     { t: "Experiencia",  go: () => navigate({ name: "home" }, "#experiencia") },
     { t: "Contacto",     go: () => navigate({ name: "home" }, "#contacto") },

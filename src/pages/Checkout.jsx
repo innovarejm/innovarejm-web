@@ -33,10 +33,11 @@ function Field({ label, value, onChange, placeholder, full }) {
 
 function MethodOption({ active, onClick, icon, title, desc, badge, disabled }) {
   return (
-    <button onClick={onClick} style={{
+    <button onClick={disabled ? undefined : onClick} disabled={disabled} aria-disabled={disabled} style={{
       display: "flex", gap: 14, alignItems: "flex-start", textAlign: "left", padding: "16px 18px", borderRadius: 14,
       border: "1.6px solid " + (active ? "var(--blue)" : "var(--line-strong)"),
       background: active ? "rgba(43,168,224,.06)" : "#fff", transition: "all .2s var(--ease)", width: "100%",
+      opacity: disabled ? .6 : 1, cursor: disabled ? "not-allowed" : "pointer",
     }}>
       <span style={{ width: 40, height: 40, borderRadius: 10, display: "grid", placeItems: "center", flexShrink: 0,
         background: active ? "var(--grad-brand)" : "var(--paper-2)", color: active ? "#fff" : "var(--ink-2)" }}>
@@ -191,7 +192,7 @@ ${form.nombre ? "\nMi nombre: " + form.nombre : ""}`;
                     <h3 style={{ fontSize: 16, fontWeight: 700, lineHeight: 1.2 }}>{p.nombre}</h3>
                     <p style={{ fontSize: 13.5, color: "var(--muted)", marginTop: 3 }}>{p.sector}, {p.ciudad}</p>
                     <span style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 13, marginTop: 5 }}>
-                      <Icon name="star" size={13} style={{ fill: "var(--ink)" }} /> {p.rating}
+                      <Icon name="star" size={13} style={{ fill: "var(--ink)" }} /> {p.rating || "Nuevo"}
                     </span>
                   </div>
                 </div>
@@ -220,6 +221,7 @@ ${form.nombre ? "\nMi nombre: " + form.nombre : ""}`;
 
       <style>{`
         .co-grid{ display:grid; grid-template-columns:1fr 400px; gap:48px; align-items:start; }
+        .co-grid aside{ align-self:stretch; }
         @media (max-width:920px){ .co-grid{ grid-template-columns:1fr; } .co-grid aside > div{ position:static !important; } .co-grid aside{ order:-1; }
           .form-grid{ grid-template-columns:1fr !important; } }
       `}</style>

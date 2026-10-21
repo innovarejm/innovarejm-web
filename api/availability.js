@@ -10,6 +10,8 @@ const ICAL_URLS = {
   'bocagrande-1601': 'https://www.airbnb.com.co/calendar/ical/965354217729718896.ics?t=3ee98be33f454d6096445a330801bf08',
   'bocagrande-1604': 'https://www.airbnb.com.co/calendar/ical/1201408121076854785.ics?t=ee114ee673004ca68bad18f60f55785c',
   'rodadero-901':    'https://www.airbnb.com.co/calendar/ical/666579984263350325.ics?t=55780b643ada408392814083135d81dd',
+  // Finca Villa Soñada: pegar aquí el enlace de Airbnb → Calendario → Disponibilidad → Exportar calendario
+  // 'darien-villa-sonada': 'https://www.airbnb.com.co/calendar/ical/1663228458512728916.ics?t=...',
 };
 
 /** Convierte DTSTART/DTEND a YYYY-MM-DD */

@@ -41,6 +41,17 @@ export function Icon({ name, size = 22, stroke = 1.6, style }) {
     play: <><circle cx="12" cy="12" r="9"/><path d="M10 8.5l5 3.5-5 3.5z"/></>,
     grid: <><rect x="3.5" y="3.5" width="7" height="7" rx="1"/><rect x="13.5" y="3.5" width="7" height="7" rx="1"/><rect x="3.5" y="13.5" width="7" height="7" rx="1"/><rect x="13.5" y="13.5" width="7" height="7" rx="1"/></>,
     map: <><path d="M9 4L4 6v14l5-2 6 2 5-2V4l-5 2-6-2z"/><path d="M9 4v14M15 6v14"/></>,
+    beach: <><path d="M12 4a8 8 0 0 1 8 8H4a8 8 0 0 1 8-8z"/><path d="M12 12v6.5a2 2 0 0 0 4 0"/><path d="M12 2.5V4"/></>,
+    jacuzzi: <><path d="M3 12h18v3a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4z"/><path d="M7 9c0-1 1-1.5 1-2.5S7 5 7 4M12 9c0-1 1-1.5 1-2.5S12 5 12 4M17 9c0-1 1-1.5 1-2.5S17 5 17 4"/></>,
+    bbq: <><path d="M4 10h16a8 8 0 0 1-16 0z"/><path d="M8.5 17l-2 4M15.5 17l2 4"/><path d="M9 7c0-1 1-1.5 1-2.5S9 3 9 2.5M14 7c0-1 1-1.5 1-2.5S14 3 14 2.5"/></>,
+    cinema: <><rect x="3" y="9" width="18" height="11" rx="1.5"/><path d="M3.5 9L5 4.5l15.5 0L21 9"/><path d="M9 4.5L7.5 9M14 4.5L12.5 9M19 4.5L17.5 9"/></>,
+    gym: <path d="M6.5 6.5v11M17.5 6.5v11M3.5 9.5v5M20.5 9.5v5M6.5 12h11"/>,
+    billiards: <><circle cx="12" cy="12" r="9"/><circle cx="12" cy="10.2" r="1.6"/><circle cx="12" cy="13.8" r="2"/></>,
+    kids: <><path d="M3.5 21L7.5 4h9l4 17"/><path d="M10 4v10M14 4v10M9 14h6"/></>,
+    ball: <><circle cx="12" cy="12" r="9"/><path d="M12 8l3.8 2.8-1.5 4.4H9.7l-1.5-4.4z"/><path d="M12 3v5M20.5 9.5l-4.7 1.3M17.5 19.2l-3.2-4M6.5 19.2l3.2-4M3.5 9.5l4.7 1.3"/></>,
+    tree: <><path d="M12 21v-5"/><path d="M12 3l6 8h-3l4 5H5l4-5H6z"/></>,
+    washer: <><rect x="4" y="3" width="16" height="18" rx="2"/><circle cx="12" cy="13" r="4.5"/><path d="M8 6.5h.01M11 6.5h.01"/></>,
+    music: <><path d="M9 18V5l11-2v13"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="17.5" cy="16" r="2.5"/></>,
   };
   return <svg {...p}>{paths[name] || null}</svg>;
 }

@@ -188,8 +188,10 @@ input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; }
   .floating-wa-btn { width: 50px !important; height: 50px !important; bottom: 18px !important; right: 18px !important; }
 }
 
-/* Evitar scroll horizontal global */
-html, body { overflow-x: hidden; max-width: 100vw; }
+/* Evitar scroll horizontal global.
+   `clip` (a diferencia de `hidden`) no convierte a body en contenedor de scroll,
+   así que `position: sticky` sigue funcionando (widget de reserva, Experiencia). */
+html, body { overflow-x: hidden; overflow-x: clip; max-width: 100vw; }
 
 /* Touch: mejorar áreas táctiles */
 @media (pointer: coarse) {
@@ -389,8 +391,8 @@ html, body { overflow-x: hidden; max-width: 100vw; }
 /* ============================================================
    PROPERTY CARDS
    ============================================================ */
-.grid-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 28px; }
-@media (max-width: 900px) { .grid-cards { grid-template-columns: 1fr 1fr; gap: 20px; } }
+.grid-cards { display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px; }
+@media (max-width: 1180px) { .grid-cards { grid-template-columns: 1fr 1fr; gap: 20px; } }
 @media (max-width: 560px) { .grid-cards { grid-template-columns: 1fr; gap: 22px; } }
 
 .prop-card {
@@ -414,13 +416,18 @@ html, body { overflow-x: hidden; max-width: 100vw; }
 /* ============================================================
    DESTINATIONS GRID
    ============================================================ */
-.dest-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-.dest-card { cursor: pointer; transition: transform .4s var(--ease), box-shadow .4s var(--ease); }
+/* --dest-cols lo fija Home.jsx según el número de destinos */
+.dest-grid { display: grid; grid-template-columns: repeat(var(--dest-cols, 2), 1fr); gap: 20px; }
+.dest-card {
+  aspect-ratio: calc(3.5 / var(--dest-cols, 2));
+  cursor: pointer; transition: transform .4s var(--ease), box-shadow .4s var(--ease);
+}
 .dest-card .ph::after { display: none; }
 @media (hover: hover) {
   .dest-card:hover { transform: translateY(-4px); box-shadow: var(--sh-lg); }
 }
-@media (max-width: 620px) { .dest-grid { grid-template-columns: 1fr; } }
+@media (max-width: 900px) { .dest-grid { grid-template-columns: 1fr; } .dest-card { aspect-ratio: 2.1; } }
+@media (max-width: 620px) { .dest-card { aspect-ratio: 1.5; } }
 
 /* ============================================================
    EXPERIENCE SECTION
@@ -588,6 +595,8 @@ html, body { overflow-x: hidden; max-width: 100vw; }
   gap: 64px;
   align-items: start;
 }
+/* La columna lateral ocupa todo el alto para que el widget sticky tenga recorrido */
+.detail-side { align-self: stretch; }
 @media (max-width: 980px) {
   .detail-grid { grid-template-columns: 1fr; gap: 30px; }
   .detail-side { order: -1; }

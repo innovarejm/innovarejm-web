@@ -10,6 +10,23 @@ export const AMENIDADES = {
   coffee:   { icon: "coffee",   label: "Estación de café" },
   beach:    { icon: "sea",      label: "Acceso fácil a la playa" },
   market:   { icon: "kitchen",  label: "Tiendas y servicios cerca" },
+  jacuzzi:  { icon: "jacuzzi",  label: "Jacuzzi" },
+  bbq:      { icon: "bbq",      label: "Zona BBQ y asador" },
+  cinema:   { icon: "cinema",   label: "Sala de cine" },
+  gym:      { icon: "gym",      label: "Gimnasio" },
+  billiards:{ icon: "billiards",label: "Mesa de billar" },
+  kids:     { icon: "kids",     label: "Parque infantil" },
+  sports:   { icon: "ball",     label: "Cancha de fútbol y baloncesto" },
+  green:    { icon: "tree",     label: "Amplias zonas verdes" },
+  washer:   { icon: "washer",   label: "Lavadora" },
+  events:   { icon: "music",    label: "Discoteca para eventos (costo adicional)" },
+};
+
+// Texto e imagen de cada destino en la sección "Dónde te esperamos"
+export const DESTINOS = {
+  "Cartagena":   { d: "El Laguito · frente a la bahía",  img: "/images/cartagena-1/01.jpg", label: "Skyline de Cartagena" },
+  "Santa Marta": { d: "Donde la sierra abraza el mar",   img: "/images/santamarta/01.jpg",  label: "Bahía de Santa Marta" },
+  "Darién":      { d: "Lago Calima · Valle del Cauca",   img: "/images/darien/01.jpg",      label: "Finca junto al Lago Calima" },
 };
 
 export const PROPERTIES = [
@@ -92,6 +109,27 @@ export const PROPERTIES = [
       { icon: "sea",    t: "Vista al mar Caribe",        d: "Piso 9 con el horizonte azul siempre a la vista." },
       { icon: "beach",  t: "Playa a pasos",              d: "El Rodadero, una de las playas más populares del Caribe colombiano." },
       { icon: "users",  t: "Hasta 8 personas",           d: "Perfecto para grupos familiares y amigos." },
+    ],
+  },
+  {
+    id: "darien-villa-sonada",
+    nombre: "Finca Villa Soñada",
+    tagline: "Finca para grupos grandes a minutos del Lago Calima",
+    ciudad: "Darién", sector: "Lago Calima",
+    lat: 0.40, lng: 0.45,
+    // Sin precio fijo: el valor depende del número de personas y se cotiza por WhatsApp.
+    // Cuando haya tarifa, basta con poner aquí el número (ej. 1500000) y se activa la reserva normal.
+    precio: null, aseo: null,
+    hab: 8, camas: 26, banos: 9, huespedes: 50, rating: null, resenas: 0,
+    destacado: false,
+    amenities: ["pool", "jacuzzi", "bbq", "cinema", "gym", "billiards", "kids", "sports", "green", "parking", "kitchen", "wifi", "tv", "washer", "events"],
+    descripcion: "Una finca espectacular en el paraíso natural de Darién, a solo 10 minutos del pueblo y de la entrada al Lago Calima. Ocho habitaciones con acomodación múltiple para grupos de hasta 50 personas, amplias zonas verdes y un ambiente tranquilo pensado para reuniones familiares, paseos y celebraciones. Piscina con jacuzzi, zona social con asador y cocina adicional junto a la piscina, sala de cine, gimnasio, billar, parque infantil, cancha de fútbol y de baloncesto y parqueadero privado. Cocina totalmente equipada, toallas y cobijas incluidas. Como servicios adicionales ofrecemos discoteca para eventos (cumpleaños, 15 años, artistas) y personal para cocinar.",
+    ubicacion: "a 10 minutos del pueblo y de la entrada al Lago Calima.",
+    galeria: Array.from({ length: 20 }, (_, i) => `/images/darien/${String(i + 1).padStart(2, "0")}.jpg`),
+    highlights: [
+      { icon: "users",   t: "Hasta 50 personas",     d: "8 habitaciones y 26 camas en acomodación múltiple para grupos grandes." },
+      { icon: "pool",    t: "Piscina y jacuzzi",      d: "Zona social con asador y cocina adicional junto a la piscina." },
+      { icon: "music",   t: "Lista para celebrar",    d: "Discoteca para eventos y personal de cocina como servicios adicionales." },
     ],
   },
 ];

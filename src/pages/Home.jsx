@@ -5,7 +5,7 @@ import { PropImage } from '../components/PropImage';
 import { SearchBar } from '../components/SearchBar';
 import { useReveal } from '../hooks/useReveal';
 import { useCountUp } from '../hooks/useCountUp';
-import { PROPERTIES, AMENIDADES, waLink } from '../data/properties';
+import { PROPERTIES, AMENIDADES, DESTINOS, waLink } from '../data/properties';
 import { formatCOP } from '../utils/helpers';
 
 /* ============================================================
@@ -365,7 +365,7 @@ function Hero({ onSearch }) {
           color: "rgba(255,255,255,.86)", lineHeight: 1.65,
           textShadow: "0 2px 18px rgba(3,15,40,.45)",
         }}>
-          Apartamentos amoblados en los mejores destinos del Caribe colombiano. Reserva directamente con nosotros, sin intermediarios.
+          Apartamentos frente al mar y fincas para grupos en los mejores destinos de Colombia. Reserva directamente con nosotros, sin intermediarios.
         </p>
 
         {/* Barra de búsqueda */}
@@ -396,7 +396,7 @@ function Hero({ onSearch }) {
       <button
         onClick={() => document.getElementById("listado")?.scrollIntoView({ behavior: "smooth" })}
         className="scroll-cue"
-        aria-label="Ver apartamentos"
+        aria-label="Ver alojamientos"
       >
         <Icon name="chevD" size={20} />
       </button>
@@ -412,7 +412,7 @@ function PropertyCard({ p, navigate, index = 0 }) {
   const [fav, setFav] = useState(false);
   const [favAnim, setFavAnim] = useState(false);
   const [img, setImg] = useState(0);
-  const [ratingVal, ratingRef] = useCountUp(p.rating, 1200, 2);
+  const [ratingVal, ratingRef] = useCountUp(p.rating || 0, 1200, 2);
 
   return (
     <article className="reveal prop-card" style={{ transitionDelay: (index * 90) + "ms" }}>
@@ -479,8 +479,9 @@ function PropertyCard({ p, navigate, index = 0 }) {
             display: "flex", justifyContent: "center", gap: 6, zIndex: 4,
           }}>
             {p.galeria.slice(0, 5).map((_, i) => (
-              <button key={i} onClick={e => { e.stopPropagation(); setImg(i); }} style={{
+              <button key={i} onClick={e => { e.stopPropagation(); setImg(i); }} aria-label={`Ver foto ${i + 1}`} style={{
                 width: i === img ? 8 : 6, height: i === img ? 8 : 6,
+                minHeight: 0, padding: 0, // anula el min-height táctil global de 44px
                 borderRadius: 99,
                 background: i === img ? "#fff" : "rgba(255,255,255,.52)",
                 transition: "all .2s",
@@ -493,24 +494,39 @@ function PropertyCard({ p, navigate, index = 0 }) {
         <div style={{ padding: "14px 16px 18px" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 10 }}>
             <h3 style={{ fontSize: 16.5, fontWeight: 700, lineHeight: 1.2 }}>{p.nombre}</h3>
-            {/* Rating con contador animado */}
-            <span ref={ratingRef} style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 13.5, fontWeight: 600, flexShrink: 0, marginTop: 1 }}>
-              <Icon name="star" size={13} style={{ fill: "oklch(0.78 0.09 75)", stroke: "oklch(0.78 0.09 75)", strokeWidth: 0 }} />
-              {ratingVal.toFixed(2)}
-            </span>
+            {/* Rating con contador animado (o "Nuevo" si aún no tiene reseñas) */}
+            {p.rating ? (
+              <span ref={ratingRef} style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 13.5, fontWeight: 600, flexShrink: 0, marginTop: 1 }}>
+                <Icon name="star" size={13} style={{ fill: "oklch(0.78 0.09 75)", stroke: "oklch(0.78 0.09 75)", strokeWidth: 0 }} />
+                {ratingVal.toFixed(2)}
+              </span>
+            ) : (
+              <span style={{ fontSize: 11.5, fontWeight: 700, letterSpacing: ".04em", padding: "3px 10px", borderRadius: 99, flexShrink: 0, background: "var(--paper-2)", color: "var(--blue-deep)" }}>
+                Nuevo
+              </span>
+            )}
           </div>
           <p style={{ color: "var(--muted)", fontSize: 14, marginTop: 5 }}>
-            {p.sector}, {p.ciudad} · Piso {p.piso}
+            {p.sector}, {p.ciudad}{p.piso ? ` · Piso ${p.piso}` : ""}
           </p>
           <p style={{ color: "var(--muted)", fontSize: 14 }}>
             {p.hab} hab · {p.banos} baños · {p.huespedes} huésp.
           </p>
           <p style={{ marginTop: 10, fontSize: 14.5, display: "flex", alignItems: "baseline", gap: 5 }}>
-            <span style={{ fontFamily: "var(--serif)", fontStyle: "italic", fontSize: 13.5, color: "var(--muted)" }}>desde</span>
-            <strong style={{ fontSize: 17, fontFamily: "var(--mono)", letterSpacing: "-.01em" }}>
-              {formatCOP(p.precio)}
-            </strong>
-            <span style={{ color: "var(--muted)", fontSize: 13 }}> / noche</span>
+            {p.precio ? (
+              <>
+                <span style={{ fontFamily: "var(--serif)", fontStyle: "italic", fontSize: 13.5, color: "var(--muted)" }}>desde</span>
+                <strong style={{ fontSize: 17, fontFamily: "var(--mono)", letterSpacing: "-.01em" }}>
+                  {formatCOP(p.precio)}
+                </strong>
+                <span style={{ color: "var(--muted)", fontSize: 13 }}> / noche</span>
+              </>
+            ) : (
+              <>
+                <strong style={{ fontSize: 15.5 }}>Precio a consultar</strong>
+                <span style={{ color: "var(--muted)", fontSize: 13 }}>· según tu grupo</span>
+              </>
+            )}
           </p>
         </div>
       </div>
@@ -574,14 +590,18 @@ function FloatingWA() {
 /* ============================================================
    Home — todas las secciones
    ============================================================ */
-export function Home({ navigate, search }) {
+export function Home({ navigate, route }) {
   const ref = useReveal();
-  const [filter, setFilter] = useState(
-    search?.dest && search.dest !== "Cualquier destino" ? search.dest : "Todos"
-  );
+  const [filter, setFilter] = useState(route?.dest || "Todos");
 
-  const ciudades = ["Todos", "Cartagena", "Santa Marta"];
+  // Permite filtrar desde fuera (ej. enlaces de destinos del footer)
+  useEffect(() => { if (route?.dest) setFilter(route.dest); }, [route]);
+
+  const ciudades = ["Todos", ...new Set(PROPERTIES.map(p => p.ciudad))];
   const list = filter === "Todos" ? PROPERTIES : PROPERTIES.filter(p => p.ciudad === filter);
+  const destinos = Object.entries(DESTINOS)
+    .map(([c, x]) => ({ c, ...x, n: PROPERTIES.filter(p => p.ciudad === c).length }))
+    .filter(x => x.n > 0);
 
   return (
     <main ref={ref}>
@@ -605,7 +625,7 @@ export function Home({ navigate, search }) {
             alignItems: "flex-end", flexWrap: "wrap", gap: 20, marginBottom: 34,
           }}>
             <div>
-              <span className="eyebrow">Nuestros apartamentos</span>
+              <span className="eyebrow">Nuestros alojamientos</span>
               <h2 style={{ fontSize: "clamp(28px,3.8vw,44px)", marginTop: 10, maxWidth: 520 }}>
                 Estancias seleccionadas{" "}
                 <span className="serif-it">para tu escapada</span>
@@ -634,24 +654,19 @@ export function Home({ navigate, search }) {
           <div className="reveal" style={{ textAlign: "center", marginBottom: 40 }}>
             <span className="eyebrow">Dónde te esperamos</span>
             <h2 style={{ fontSize: "clamp(28px,3.8vw,44px)", marginTop: 10 }}>
-              Dos joyas del Caribe
+              Del Caribe al{" "}
+              <span className="serif-it">Lago Calima</span>
             </h2>
           </div>
-          <div className="reveal-scale dest-grid">
-            {[
-              { c: "Cartagena",   d: "El Laguito · frente a la bahía", n: 2, label: "Skyline de Cartagena" },
-              { c: "Santa Marta", d: "Donde la sierra abraza el mar",   n: 1, label: "Bahía de Santa Marta" },
-            ].map(x => (
+          <div className="reveal-scale dest-grid" style={{ "--dest-cols": destinos.length }}>
+            {destinos.map(x => (
               <button
                 key={x.c}
                 onClick={() => { setFilter(x.c); document.getElementById("listado")?.scrollIntoView({ behavior: "smooth" }); }}
                 className="dest-card"
-                style={{ position: "relative", borderRadius: 24, overflow: "hidden", aspectRatio: "1.75", textAlign: "left", color: "#fff" }}
+                style={{ position: "relative", borderRadius: 24, overflow: "hidden", textAlign: "left", color: "#fff" }}
               >
-                <PropImage
-                  src={x.c === "Cartagena" ? "/images/cartagena-1/01.jpg" : "/images/santamarta/01.jpg"}
-                  alt={x.label}
-                />
+                <PropImage src={x.img} alt={x.label} />
                 <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(8,40,70,0) 35%, rgba(8,40,70,.8))" }} />
                 <div style={{ position: "absolute", left: 26, bottom: 24, zIndex: 2 }}>
                   <div style={{ fontSize: 30, fontWeight: 800, letterSpacing: "-.02em", lineHeight: 1 }}>{x.c}</div>
@@ -663,7 +678,7 @@ export function Home({ navigate, search }) {
                     background: "rgba(255,255,255,.14)", backdropFilter: "blur(6px)",
                     letterSpacing: ".06em",
                   }}>
-                    {x.n} {x.n > 1 ? "apartamentos" : "apartamento"} <Icon name="arrow" size={14} />
+                    {x.n} {x.n > 1 ? "alojamientos" : "alojamiento"} <Icon name="arrow" size={14} />
                   </div>
                 </div>
               </button>
@@ -710,7 +725,7 @@ export function Home({ navigate, search }) {
               {[
                 { n: "01", ic: "key",     t: "Trato directo",     d: "Sin intermediarios ni comisiones ocultas. Hablas con nosotros de principio a fin." },
                 { n: "02", ic: "shield",  t: "Reserva segura",    d: "Confirmación inmediata y acompañamiento durante toda tu estancia." },
-                { n: "03", ic: "pin",     t: "Ubicación premium",  d: "Seleccionados en los mejores puntos de Cartagena y Santa Marta." },
+                { n: "03", ic: "pin",     t: "Ubicación premium",  d: "Seleccionados en los mejores puntos de Cartagena, Santa Marta y el Lago Calima." },
                 { n: "04", ic: "sparkle", t: "Listos para vivir", d: "Totalmente amoblados y equipados. Llega con tu maleta y nada más." },
               ].map((x, i) => (
                 <div key={x.t} className="reveal-left exp-item" style={{ transitionDelay: (i * 100) + "ms" }}>
@@ -755,17 +770,17 @@ export function Home({ navigate, search }) {
                 <span className="serif-it">próxima escapada</span>?
               </h2>
               <p style={{ maxWidth: 430, margin: "18px auto 0", fontSize: 16.5, color: "rgba(255,255,255,.9)" }}>
-                Escríbenos por WhatsApp y te ayudamos a encontrar fechas y el apartamento perfecto.
+                Escríbenos por WhatsApp y te ayudamos a encontrar fechas y el alojamiento perfecto.
               </p>
               <div style={{ display: "flex", gap: 12, justifyContent: "center", marginTop: 32, flexWrap: "wrap" }}>
                 <a className="btn btn-wa"
-                  href={waLink("Hola INNOVARE JM, quiero reservar un apartamento. ¿Me ayudan con la disponibilidad?")}
+                  href={waLink("Hola INNOVARE JM, quiero hacer una reserva. ¿Me ayudan con la disponibilidad?")}
                   target="_blank" rel="noopener">
                   <Icon name="wa" size={19} /> Escríbenos por WhatsApp
                 </a>
                 <button className="btn" style={{ background: "rgba(255,255,255,.16)", color: "#fff", border: "1px solid rgba(255,255,255,.4)" }}
                   onClick={() => document.getElementById("listado")?.scrollIntoView({ behavior: "smooth" })}>
-                  Ver apartamentos
+                  Ver alojamientos
                 </button>
               </div>
             </div>

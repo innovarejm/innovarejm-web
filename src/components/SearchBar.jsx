@@ -84,6 +84,7 @@ export function SearchBar({ variant = "hero", onSearch, initial }) {
   const [guests, setGuests]     = useState(() => initial?.guests  ?? DEFAULT_GUESTS);
 
   const selectedProp = PROPERTIES.find(p => p.id === selectedId) || null;
+  const maxGuests = selectedProp ? selectedProp.huespedes : Math.max(...PROPERTIES.map(p => p.huespedes));
   const totalG = guests.adultos + guests.ninos;
   const dark = variant === "hero";
 
@@ -112,7 +113,7 @@ export function SearchBar({ variant = "hero", onSearch, initial }) {
            dark={dark} field={field} onToggle={toggle}>
         <Popover open={field === "dest"} onClose={close} width={290}>
           <p style={{ fontSize: 11.5, fontWeight: 700, letterSpacing: ".06em", textTransform: "uppercase", color: "var(--muted)", marginBottom: 10, marginTop: 2 }}>
-            Elige un apartamento
+            Elige un alojamiento
           </p>
           <div style={{ display: "grid", gap: 4 }}>
             {PROPERTIES.map(p => (
@@ -129,7 +130,7 @@ export function SearchBar({ variant = "hero", onSearch, initial }) {
                 </span>
                 <div style={{ minWidth: 0 }}>
                   <div style={{ fontWeight: 700, fontSize: 14, color: "var(--ink)", lineHeight: 1.2 }}>{shortName(p)}</div>
-                  <div style={{ fontSize: 12.5, color: "var(--muted)", marginTop: 2 }}>{p.sector}, {p.ciudad} · Piso {p.piso}</div>
+                  <div style={{ fontSize: 12.5, color: "var(--muted)", marginTop: 2 }}>{p.sector}, {p.ciudad}{p.piso ? ` · Piso ${p.piso}` : ""}</div>
                 </div>
               </button>
             ))}
@@ -158,7 +159,7 @@ export function SearchBar({ variant = "hero", onSearch, initial }) {
         value={totalG ? `${totalG} huésped${totalG > 1 ? "es" : ""}${guests.bebes ? " · " + guests.bebes + " bebé" + (guests.bebes > 1 ? "s" : "") : ""}` : ""}
         grow dark={dark} field={field} onToggle={toggle}>
         <Popover open={field === "guests"} onClose={close} width={320} align="right">
-          <GuestPicker value={guests} onChange={setGuests} max={8} />
+          <GuestPicker value={guests} onChange={setGuests} max={maxGuests} />
         </Popover>
       </Seg>
 

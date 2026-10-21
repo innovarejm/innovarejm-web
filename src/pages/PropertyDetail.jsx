@@ -93,6 +93,12 @@ function BookingWidget({ p, navigate }) {
   const { subtotal, rows: priceRows } = calcSubtotal(range.start, range.end, p.precio, p.precioFinde);
   const total = subtotal;
   const totalG = guests.adultos + guests.ninos;
+  // Sin precio fijo → el flujo es cotizar por WhatsApp en lugar de ir al checkout
+  const quote = !p.precio;
+  const fechasTxt = nights ? ` del ${fmtFecha(range.start)} al ${fmtFecha(range.end)} (${nights} noche${nights > 1 ? "s" : ""})` : "";
+  const waMsg = quote
+    ? `Hola INNOVARE JM, quiero cotizar "${p.nombre}" para ${totalG} persona${totalG > 1 ? "s" : ""}${fechasTxt}. ¿Me envían precio y disponibilidad?`
+    : `Hola INNOVARE JM, me interesa "${p.nombre}"${nights ? ` del ${fmtFecha(range.start)} al ${fmtFecha(range.end)} (${nights} noches, ${totalG} huéspedes)` : ""}. ¿Disponibilidad?`;
 
   function reservar() {
     if (!nights) { setOpenCal(true); return; }
@@ -108,18 +114,31 @@ function BookingWidget({ p, navigate }) {
 
   return (
     <div className="bw">
-      <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 16 }}>
+      <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 12, marginBottom: 16 }}>
         <div>
-          <span style={{ display: "flex", alignItems: "baseline", gap: 5 }}>
-            <span style={{ fontFamily: "var(--serif)", fontStyle: "italic", fontSize: 14, color: "var(--muted)" }}>desde</span>
-            <span style={{ fontSize: 24, fontWeight: 700, fontFamily: "var(--mono)", letterSpacing: "-.01em" }}>{formatCOP(p.precio)}</span>
-            <span style={{ color: "var(--muted)", fontSize: 15 }}> / noche</span>
-          </span>
+          {quote ? (
+            <>
+              <span style={{ display: "block", fontSize: 22, fontWeight: 700 }}>Precio a consultar</span>
+              <span style={{ display: "block", fontSize: 13.5, color: "var(--muted)", marginTop: 2 }}>Según número de personas y fechas</span>
+            </>
+          ) : (
+            <span style={{ display: "flex", alignItems: "baseline", gap: 5 }}>
+              <span style={{ fontFamily: "var(--serif)", fontStyle: "italic", fontSize: 14, color: "var(--muted)" }}>desde</span>
+              <span style={{ fontSize: 24, fontWeight: 700, fontFamily: "var(--mono)", letterSpacing: "-.01em" }}>{formatCOP(p.precio)}</span>
+              <span style={{ color: "var(--muted)", fontSize: 15 }}> / noche</span>
+            </span>
+          )}
         </div>
-        <span style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 14 }}>
-          <Icon name="star" size={14} style={{ fill: "oklch(0.78 0.09 75)", stroke: "oklch(0.78 0.09 75)", strokeWidth: 0 }} />
-          {p.rating} · <span style={{ color: "var(--muted)" }}>{p.resenas} reseñas</span>
-        </span>
+        {p.rating ? (
+          <span style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 14, flexShrink: 0 }}>
+            <Icon name="star" size={14} style={{ fill: "oklch(0.78 0.09 75)", stroke: "oklch(0.78 0.09 75)", strokeWidth: 0 }} />
+            {p.rating} · <span style={{ color: "var(--muted)" }}>{p.resenas} reseñas</span>
+          </span>
+        ) : (
+          <span style={{ fontSize: 12, fontWeight: 700, letterSpacing: ".04em", padding: "4px 11px", borderRadius: 99, flexShrink: 0, background: "var(--paper-2)", color: "var(--blue-deep)" }}>
+            Nuevo
+          </span>
+        )}
       </div>
 
       <div style={{ border: "1px solid var(--line-strong)", borderRadius: 14, overflow: "visible", position: "relative" }}>
@@ -159,16 +178,22 @@ function BookingWidget({ p, navigate }) {
         )}
       </div>
 
-      <button className="btn btn-primary" style={{ width: "100%", justifyContent: "center", marginTop: 14, height: 54, fontSize: 16 }} onClick={reservar}>
-        {nights ? "Reservar" : "Comprobar disponibilidad"}
-      </button>
-      <a className="btn btn-wa" style={{ width: "100%", justifyContent: "center", marginTop: 10, height: 50 }}
-        href={waLink(`Hola INNOVARE JM, me interesa "${p.nombre}"${nights ? ` del ${fmtFecha(range.start)} al ${fmtFecha(range.end)} (${nights} noches, ${totalG} huéspedes)` : ""}. ¿Disponibilidad?`)}
+      {!quote && (
+        <button className="btn btn-primary" style={{ width: "100%", justifyContent: "center", marginTop: 14, height: 54, fontSize: 16 }} onClick={reservar}>
+          {nights ? "Reservar" : "Comprobar disponibilidad"}
+        </button>
+      )}
+      <a className="btn btn-wa" style={{ width: "100%", justifyContent: "center", marginTop: quote ? 14 : 10, height: quote ? 54 : 50, fontSize: quote ? 16 : undefined }}
+        href={waLink(waMsg)}
         target="_blank" rel="noopener noreferrer">
-        <Icon name="wa" size={18} /> Consultar por WhatsApp
+        <Icon name="wa" size={18} /> {quote ? "Cotizar por WhatsApp" : "Consultar por WhatsApp"}
       </a>
 
-      {nights > 0 ? (
+      {quote ? (
+        <p style={{ marginTop: 16, textAlign: "center", fontSize: 13.5, color: "var(--muted)" }}>
+          El valor depende del número de personas. Elige fechas y huéspedes y te enviamos la cotización por WhatsApp.
+        </p>
+      ) : nights > 0 ? (
         <div style={{ marginTop: 22, display: "grid", gap: 12, fontSize: 14.5 }}>
           {priceRows.map((r, i) => (
             <PriceRow key={i} l={`${formatCOP(r.price)} × ${r.count} noche${r.count > 1 ? "s" : ""}${r.label ? ` (${r.label})` : ""}`} r={formatCOP(r.price * r.count)} />
@@ -207,16 +232,22 @@ export function PropertyDetail({ id, navigate }) {
     <main ref={ref} style={{ paddingTop: 78 }}>
       <div className="wrap" style={{ paddingTop: 26 }}>
         <button onClick={() => navigate({ name: "home" }, "#listado")} style={{ display: "inline-flex", alignItems: "center", gap: 7, fontSize: 14, color: "var(--ink-2)", fontWeight: 500, marginBottom: 16 }}>
-          <Icon name="arrowL" size={16} /> Todos los apartamentos
+          <Icon name="arrowL" size={16} /> Todos los alojamientos
         </button>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", flexWrap: "wrap", gap: 14, marginBottom: 18 }}>
           <div>
             <h1 style={{ fontSize: "clamp(26px,3.4vw,40px)", fontWeight: 700 }}>{p.nombre}</h1>
             <div style={{ display: "flex", gap: 16, marginTop: 8, fontSize: 14.5, color: "var(--ink-2)", flexWrap: "wrap" }}>
-              <span style={{ display: "inline-flex", gap: 5, alignItems: "center" }}>
-                <Icon name="star" size={15} style={{ fill: "oklch(0.78 0.09 75)", stroke: "oklch(0.78 0.09 75)", strokeWidth: 0 }} />
-                {p.rating} · {p.resenas} reseñas
-              </span>
+              {p.rating ? (
+                <span style={{ display: "inline-flex", gap: 5, alignItems: "center" }}>
+                  <Icon name="star" size={15} style={{ fill: "oklch(0.78 0.09 75)", stroke: "oklch(0.78 0.09 75)", strokeWidth: 0 }} />
+                  {p.rating} · {p.resenas} reseñas
+                </span>
+              ) : (
+                <span style={{ display: "inline-flex", gap: 5, alignItems: "center" }}>
+                  <Icon name="sparkle" size={15} style={{ color: "oklch(0.78 0.09 75)" }} /> Nuevo en INNOVARE
+                </span>
+              )}
               <span style={{ display: "inline-flex", gap: 5, alignItems: "center" }}>
                 <Icon name="pin" size={15} /> {p.sector}, {p.ciudad}
               </span>
@@ -232,7 +263,7 @@ export function PropertyDetail({ id, navigate }) {
           <div className="reveal" style={{ paddingBottom: 28, borderBottom: "1px solid var(--line)" }}>
             <h2 style={{ fontSize: 24, fontWeight: 700 }}>{p.tagline}</h2>
             <p style={{ marginTop: 8, color: "var(--ink-2)", fontSize: 15.5 }}>
-              {p.hab} habitaciones · {p.banos} baños · hasta {p.huespedes} huéspedes · Piso {p.piso}
+              {p.hab} habitaciones · {p.camas ? `${p.camas} camas · ` : ""}{p.banos} baños · hasta {p.huespedes} huéspedes{p.piso ? ` · Piso ${p.piso}` : ""}
             </p>
           </div>
 
@@ -269,7 +300,7 @@ export function PropertyDetail({ id, navigate }) {
               <MapMini p={p} />
             </div>
             <p style={{ marginTop: 14, color: "var(--ink-2)", fontSize: 15 }}>
-              <strong>{p.sector}, {p.ciudad}</strong> — a pasos del mar Caribe.
+              <strong>{p.sector}, {p.ciudad}</strong> — {p.ubicacion || "a pasos del mar Caribe."}
             </p>
           </div>
         </div>
@@ -284,7 +315,7 @@ export function PropertyDetail({ id, navigate }) {
       <section style={{ background: "var(--paper-2)", paddingBlock: 70 }}>
         <div className="wrap">
           <h2 className="reveal" style={{ fontSize: 26, fontWeight: 700, marginBottom: 26 }}>También te puede gustar</h2>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 28 }} className="otras-grid">
+          <div style={{ display: "grid", gridTemplateColumns: `repeat(${Math.min(otras.length, 3)}, 1fr)`, gap: 28 }} className="otras-grid">
             {otras.map((o, i) => (
               <article key={o.id} className="reveal" style={{ transitionDelay: (i * 90) + "ms", cursor: "pointer" }}
                 onClick={() => navigate({ name: "property", id: o.id })}>
@@ -295,8 +326,14 @@ export function PropertyDetail({ id, navigate }) {
                   <h3 style={{ fontSize: 16, fontWeight: 700 }}>{o.nombre}</h3>
                   <p style={{ color: "var(--muted)", fontSize: 14 }}>{o.sector}, {o.ciudad}</p>
                   <p style={{ marginTop: 6, fontSize: 14.5 }}>
-                    <strong>{formatCOP(o.precio)}</strong>
-                    <span style={{ color: "var(--muted)" }}> / noche</span>
+                    {o.precio ? (
+                      <>
+                        <strong>{formatCOP(o.precio)}</strong>
+                        <span style={{ color: "var(--muted)" }}> / noche</span>
+                      </>
+                    ) : (
+                      <strong>Precio a consultar</strong>
+                    )}
                   </p>
                 </div>
               </article>

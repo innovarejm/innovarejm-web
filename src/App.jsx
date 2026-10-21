@@ -8,7 +8,6 @@ const Checkout       = lazy(() => import('./pages/Checkout').then(m => ({ defaul
 
 export function App() {
   const [route, setRoute] = useState({ name: "home" });
-  const [search, setSearch] = useState(null);
 
   const navigate = useCallback((next, hash) => {
     setRoute(next);
@@ -26,7 +25,7 @@ export function App() {
   return (
     <>
       <Nav navigate={navigate} route={route} transparentTop={transparentTop} />
-      {route.name === "home" && <Home navigate={navigate} search={search} />}
+      {route.name === "home" && <Home navigate={navigate} route={route} />}
       <Suspense fallback={null}>
         {route.name === "property" && <PropertyDetail id={route.id} navigate={navigate} />}
         {route.name === "checkout" && <Checkout id={route.id} booking={route.booking} navigate={navigate} />}

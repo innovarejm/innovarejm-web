@@ -1,6 +1,8 @@
 import { Wordmark } from '../brand/Wordmark';
 import { Icon } from '../icons/Icon';
-import { CONTACT, waLink } from '../data/properties';
+import { CONTACT, PROPERTIES, waLink } from '../data/properties';
+
+const CIUDADES = [...new Set(PROPERTIES.map(p => p.ciudad))];
 
 export function Footer({ navigate }) {
   return (
@@ -22,7 +24,7 @@ export function Footer({ navigate }) {
           <div>
             <Wordmark light />
             <p style={{ marginTop: 20, maxWidth: 320, fontSize: 14.5, lineHeight: 1.7 }}>
-              Apartamentos amoblados frente al mar en Cartagena y Santa Marta.
+              Apartamentos frente al mar en Cartagena y Santa Marta, y una finca para grupos junto al Lago Calima.
               Estancias pensadas para que solo te preocupes por disfrutar.
             </p>
             <div style={{ display: "flex", gap: 10, marginTop: 22 }}>
@@ -36,14 +38,15 @@ export function Footer({ navigate }) {
           </div>
           <div>
             <h4 className="foot-h">Explorar</h4>
-            <FootLink onClick={() => navigate({ name: "home" }, "#listado")}>Apartamentos</FootLink>
+            <FootLink onClick={() => navigate({ name: "home" }, "#listado")}>Alojamientos</FootLink>
             <FootLink onClick={() => navigate({ name: "home" }, "#destinos")}>Destinos</FootLink>
             <FootLink onClick={() => navigate({ name: "home" }, "#experiencia")}>La experiencia</FootLink>
           </div>
           <div>
             <h4 className="foot-h">Destinos</h4>
-            <FootLink onClick={() => navigate({ name: "home" }, "#listado")}>Cartagena</FootLink>
-            <FootLink onClick={() => navigate({ name: "home" }, "#listado")}>Santa Marta</FootLink>
+            {CIUDADES.map(c => (
+              <FootLink key={c} onClick={() => navigate({ name: "home", dest: c }, "#listado")}>{c}</FootLink>
+            ))}
           </div>
           <div>
             <h4 className="foot-h">Contacto</h4>
