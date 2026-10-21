@@ -573,6 +573,10 @@ html, body { overflow-x: hidden; overflow-x: clip; max-width: 100vw; }
   .gallery .g-cell { aspect-ratio: 1.3; }
 }
 
+/* ── Mapa de ubicación ── */
+.map-box { aspect-ratio: 2.4; }
+@media (max-width: 620px) { .map-box { aspect-ratio: 1.4; } }
+
 /* ── Map pin pulse ── */
 @keyframes pinPulse {
   0%, 100% { transform: translateY(0); }

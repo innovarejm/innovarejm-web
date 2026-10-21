@@ -452,7 +452,7 @@ function PropertyCard({ p, navigate, index = 0 }) {
               boxShadow: "0 2px 12px rgba(12,38,56,.14)",
             }}>
               <Icon name="sparkle" size={13} style={{ color: "oklch(0.78 0.09 75)" }} />
-              Favorito de huéspedes
+              Destacado
             </span>
           )}
 

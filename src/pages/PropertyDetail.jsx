@@ -58,25 +58,37 @@ function Gallery({ p }) {
   );
 }
 
-/* ---------- Mapa minimalista ---------- */
-function MapMini({ p }) {
+/* ---------- Mapa real (OpenStreetMap) con zona aproximada ---------- */
+function LocationMap({ p }) {
+  const [lat, lng] = p.geo;
+  // Caja de ~2 km centrada en el punto, con la proporción del contenedor
+  const dLat = 0.009, dLng = dLat * 2.4 / Math.cos(lat * Math.PI / 180);
+  const bbox = [lng - dLng, lat - dLat, lng + dLng, lat + dLat].map(n => n.toFixed(5)).join(",");
   return (
-    <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg,#eaf3f8,#dfeef5)" }}>
-      <div style={{ position: "absolute", inset: 0, opacity: .5,
-        backgroundImage: "linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px)",
-        backgroundSize: "44px 44px" }} />
-      <div style={{ position: "absolute", left: 0, bottom: 0, right: 0, height: "46%",
-        background: "linear-gradient(180deg, rgba(43,168,224,.22), rgba(21,119,194,.30))" }} />
-      <div style={{ position: "absolute", left: `${p.lng * 70 + 12}%`, top: `${p.lat * 50 + 20}%`, transform: "translate(-50%,-100%)" }}>
-        <div style={{ width: 44, height: 44, borderRadius: 99, background: "var(--grad-brand)", display: "grid", placeItems: "center",
-          color: "#fff", boxShadow: "var(--sh-md)", border: "3px solid #fff", animation: "pinPulse 2.4s ease-in-out infinite" }}>
-          <Icon name="pin" size={22} />
-        </div>
+    <div style={{ position: "absolute", inset: 0, background: "#e8eef2" }}>
+      <iframe
+        title={`Mapa de ${p.sector}, ${p.ciudad}`}
+        src={`https://www.openstreetmap.org/export/embed.html?bbox=${bbox}&layer=mapnik`}
+        loading="lazy"
+        style={{ border: 0, width: "100%", height: "100%", display: "block", pointerEvents: "none", filter: "saturate(.85)" }}
+      />
+      {/* Zona aproximada: Airbnb solo publica coordenadas aproximadas */}
+      <div aria-hidden="true" style={{ position: "absolute", left: "50%", top: "50%", width: 130, height: 130, transform: "translate(-50%,-50%)",
+        borderRadius: 999, background: "rgba(21,119,194,.16)", border: "2px solid rgba(21,119,194,.5)" }} />
+      <div aria-hidden="true" style={{ position: "absolute", left: "50%", top: "50%", transform: "translate(-50%,-50%)",
+        width: 44, height: 44, borderRadius: 99, background: "var(--grad-brand)", display: "grid", placeItems: "center",
+        color: "#fff", boxShadow: "var(--sh-md)", border: "3px solid #fff" }}>
+        <Icon name={p.ciudad === "Darién" ? "tree" : "sea"} size={20} />
       </div>
-      <span style={{ position: "absolute", left: 16, bottom: 14, fontFamily: "var(--mono)", fontSize: 11, letterSpacing: ".1em",
-        color: "var(--blue-deep)", background: "rgba(255,255,255,.7)", padding: "5px 10px", borderRadius: 99 }}>
-        mapa · {p.ciudad}
+      <span style={{ position: "absolute", left: 14, bottom: 14, fontSize: 12, fontWeight: 600,
+        color: "var(--blue-deep)", background: "rgba(255,255,255,.92)", padding: "6px 12px", borderRadius: 99, boxShadow: "var(--sh-sm)" }}>
+        Ubicación aproximada
       </span>
+      <a href={`https://www.google.com/maps/search/?api=1&query=${lat},${lng}`} target="_blank" rel="noopener noreferrer"
+        style={{ position: "absolute", right: 14, bottom: 14, fontSize: 12.5, fontWeight: 600, color: "var(--ink)",
+          background: "#fff", padding: "8px 14px", borderRadius: 99, boxShadow: "var(--sh-md)", display: "inline-flex", gap: 6, alignItems: "center" }}>
+        <Icon name="map" size={15} /> Abrir en Google Maps
+      </a>
     </div>
   );
 }
@@ -296,8 +308,8 @@ export function PropertyDetail({ id, navigate }) {
 
           <div className="reveal" style={{ paddingTop: 30 }}>
             <h2 style={{ fontSize: 22, fontWeight: 700, marginBottom: 18 }}>Dónde estarás</h2>
-            <div style={{ position: "relative", borderRadius: 18, overflow: "hidden", aspectRatio: "2.4" }}>
-              <MapMini p={p} />
+            <div className="map-box" style={{ position: "relative", borderRadius: 18, overflow: "hidden" }}>
+              <LocationMap p={p} />
             </div>
             <p style={{ marginTop: 14, color: "var(--ink-2)", fontSize: 15 }}>
               <strong>{p.sector}, {p.ciudad}</strong> — {p.ubicacion || "a pasos del mar Caribe."}
