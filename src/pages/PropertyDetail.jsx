@@ -6,6 +6,7 @@ import { GuestPicker } from '../components/GuestPicker';
 import { useReveal } from '../hooks/useReveal';
 import { useAvailability, isRangeAvailable } from '../hooks/useAvailability';
 import { PROPERTIES, AMENIDADES, findProperty, airbnbReviewsUrl, waLink } from '../data/properties';
+import { track } from '../analytics';
 import { formatCOP, nightsBetween, fmtFecha, calcSubtotal, huespedesTxt } from '../utils/helpers';
 import { routeToUrl, replaceUrl } from '../router';
 import { NotFound } from './Privacy';
@@ -178,6 +179,14 @@ function BookingWidget({ p, navigate, range, setRange, guests, setGuests, openSi
 
   function reservar() {
     if (!nights) { setOpenCal(true); setOpenG(false); return; }
+    track("initiate_checkout", {
+      content_name: p.nombre,
+      content_ids: [p.id],
+      value: total,
+      currency: "COP",
+      nights,
+      guests: totalG,
+    });
     navigate({ name: "checkout", id: p.id, booking: { range, guests } });
   }
 
@@ -342,6 +351,16 @@ export function PropertyDetail({ id, booking, navigate }) {
   });
   const [barVisible, setBarVisible] = useState(false);
   const [openSignal, setOpenSignal] = useState(0);
+
+  useEffect(() => {
+    if (!p) return;
+    track("view_content", {
+      content_name: p.nombre,
+      content_ids: [p.id],
+      content_type: "property",
+      city: p.ciudad,
+    });
+  }, [p]);
 
   // La URL refleja las fechas y huéspedes elegidos (se puede compartir o recargar)
   useEffect(() => {
