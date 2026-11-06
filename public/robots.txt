@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+Disallow: /reservar/
+
+Sitemap: https://www.innovarejm.com/sitemap.xml

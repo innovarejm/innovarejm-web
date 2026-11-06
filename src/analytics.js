@@ -1,5 +1,5 @@
 /* Analytics for GA4 (optional) and the INNOVARE JM Meta Pixel. */
-const GA_ID = import.meta.env.VITE_GA_ID;
+const GA_ID = import.meta.env.VITE_GA_ID || "G-V98GH9N1H4";
 const META_PIXEL_ID = import.meta.env.VITE_META_PIXEL_ID || "1070478956041972";
 
 let analyticsInitialized = false;

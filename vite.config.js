@@ -1,6 +1,6 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
-import { readFileSync, writeFileSync, mkdirSync } from 'node:fs'
+import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs'
 import path from 'node:path'
 import { PROPERTIES, DESTINOS, CONTACT } from './src/data/properties.js'
 
@@ -19,10 +19,12 @@ function seoPages() {
       // En Vercel se usa el dominio de producción automáticamente
       const site = (process.env.SITE_URL
         || (process.env.VERCEL_PROJECT_PRODUCTION_URL ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}` : '')
+        || 'https://www.innovarejm.com'
       ).replace(/\/$/, '')
       const abs = (p) => site + p
       const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;')
-      const base = readFileSync(path.join(outDir, 'index.html'), 'utf8')
+      const baseFile = existsSync(path.join(outDir, 'index.html')) ? path.join(outDir, 'index.html') : path.resolve('index.html')
+      const base = readFileSync(baseFile, 'utf8')
 
       const render = ({ url, title, description, image, jsonld }) => {
         let html = base
