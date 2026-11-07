@@ -1,10 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Icon } from '../icons/Icon';
 import { PropImage } from '../components/PropImage';
 import { useAvailability, isRangeAvailable } from '../hooks/useAvailability';
 import { findProperty, waLink } from '../data/properties';
-import { formatCOP, nightsBetween, fmtFecha, calcSubtotal, huespedesTxt } from '../utils/helpers';
+import { formatCOP, nightsBetween, fmtFecha, calcSubtotal, huespedesTxt, toISODate } from '../utils/helpers';
 import { routeToUrl } from '../router';
+import { track, trackLead, setUserData, getAttribution } from '../analytics';
 import { NotFound } from './Privacy';
 
 const DEFAULT_GUESTS = { adultos: 2, ninos: 0, bebes: 0 };
@@ -131,16 +132,32 @@ export function Checkout({ id, booking, navigate }) {
   const [done, setDone] = useState(false);
   const [form, setForm] = useState({ nombre: "", email: "", tel: "", acepta: false });
   const [showErrors, setShowErrors] = useState(false);
+  const sentRef = useRef(false);
   const { blockedRanges, loading: loadingAvail } = useAvailability(p?.id || null);
 
+  const { subtotal, rows: priceRows } = calcSubtotal(start, end, p?.precio ?? 0, p?.precioFinde);
+  const aseo = p?.aseo || 0;
+  const total = subtotal + aseo;
+
   useEffect(() => { window.scrollTo({ top: 0, behavior: "instant" }); }, [done]);
+
+  // Entrar al checkout es intención real de compra. Se registra una sola vez por visita.
+  useEffect(() => {
+    if (!p || !nights) return;
+    track("initiate_checkout", {
+      content_name: p.nombre,
+      content_ids: [p.id],
+      value: total,
+      currency: "COP",
+      nights,
+      guests: totalG,
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   if (!p) return <NotFound navigate={navigate} />;
 
   const backToProperty = () => navigate({ name: "property", id: p.id, booking });
-  const { subtotal, rows: priceRows } = calcSubtotal(start, end, p.precio, p.precioFinde);
-  const aseo = p.aseo || 0;
-  const total = subtotal + aseo;
   const conflict = !loadingAvail && nights > 0 && !isRangeAvailable(start, end, blockedRanges);
 
   const errors = {
@@ -152,6 +169,11 @@ export function Checkout({ id, booking, navigate }) {
   const valid = !Object.values(errors).some(Boolean);
   const err = (k) => (showErrors ? errors[k] || null : null);
 
+  const sessionAttr = getAttribution();
+  const sourceLine = sessionAttr.utm_source
+    ? `\n• Origen: ${sessionAttr.utm_source}${sessionAttr.utm_campaign ? ` / ${sessionAttr.utm_campaign}` : ""}`
+    : "";
+
   const waMsg = `Hola INNOVARE JM 👋, quiero reservar:
 • ${p.nombre} (${p.sector}, ${p.ciudad})
 • ${fmtFecha(start)} → ${fmtFecha(end)} · ${nights} noche${nights > 1 ? "s" : ""}
@@ -160,7 +182,71 @@ export function Checkout({ id, booking, navigate }) {
 
 Mis datos:
 • Nombre: ${form.nombre.trim()}
-• Teléfono: ${form.tel.trim()}${form.email.trim() ? `\n• Correo: ${form.email.trim()}` : ""}`;
+• Teléfono: ${form.tel.trim()}${form.email.trim() ? `\n• Correo: ${form.email.trim()}` : ""}${sourceLine}`;
+
+  function handleSend(e) {
+    if (!valid) { e.preventDefault(); setShowErrors(true); return; }
+    if (sentRef.current) { e.preventDefault(); return; }
+    sentRef.current = true;
+
+    const parts = form.nombre.trim().split(/\s+/);
+    const firstName = parts[0] || "Prospecto";
+    const lastName = parts.slice(1).join(" ") || "-";
+    const eventId = window.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+
+    // Señal de conversión con datos de contacto (Meta hace el hash en el navegador).
+    setUserData({ email: form.email, phone: form.tel, firstName, lastName });
+    trackLead({
+      value: total,
+      currency: "COP",
+      contentName: p.nombre,
+      contentIds: [p.id],
+      eventId,
+      nights,
+      guests: totalG,
+      city: p.ciudad,
+    });
+
+    // Guardar el lead en el CRM. Si falla, WhatsApp igual se abre.
+    const attr = getAttribution();
+    const payload = {
+      first_name: firstName,
+      last_name: lastName,
+      email: form.email.trim() || undefined,
+      phone: form.tel.trim(),
+      source_channel: "web",
+      event_id: eventId,
+      consent_given: true,
+      consent_at: new Date().toISOString(),
+      consent_source: "web_checkout",
+      property: p.nombre,
+      city: p.ciudad,
+      check_in: toISODate(start),
+      check_out: toISODate(end),
+      nights,
+      adults: guests.adultos,
+      children: guests.ninos,
+      infants: guests.bebes,
+      estimated_value: total,
+      utm_source: attr.utm_source,
+      utm_medium: attr.utm_medium,
+      utm_campaign: attr.utm_campaign,
+      utm_term: attr.utm_term,
+      utm_content: attr.utm_content,
+      fbclid: attr.fbclid,
+      fbc: attr.fbc,
+      fbp: attr.fbp,
+      metadata: { property_id: p.id, page: window.location.href },
+    };
+    fetch("/api/lead", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+      keepalive: true,
+    }).catch(() => {});
+
+    setDone(true);
+  }
 
   // Casos en que no se puede reservar desde esta página (enlaces viejos, sin fechas, sin precio fijo)
   let blocker = null;
@@ -242,10 +328,7 @@ Mis datos:
 
               <a className="btn btn-wa" style={{ justifyContent: "center", height: 56, fontSize: 16, opacity: valid ? 1 : .6 }}
                 href={waLink(waMsg)} target="_blank" rel="noopener noreferrer"
-                onClick={(e) => {
-                  if (!valid) { e.preventDefault(); setShowErrors(true); return; }
-                  setDone(true);
-                }}>
+                onClick={handleSend}>
                 <Icon name="wa" size={20} /> Enviar solicitud por WhatsApp
               </a>
               {!valid && !showErrors && <p style={{ fontSize: 13, color: "var(--muted)", textAlign: "center", marginTop: -8 }}>Completa tus datos y acepta la política para continuar.</p>}

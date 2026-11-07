@@ -179,14 +179,7 @@ function BookingWidget({ p, navigate, range, setRange, guests, setGuests, openSi
 
   function reservar() {
     if (!nights) { setOpenCal(true); setOpenG(false); return; }
-    track("initiate_checkout", {
-      content_name: p.nombre,
-      content_ids: [p.id],
-      value: total,
-      currency: "COP",
-      nights,
-      guests: totalG,
-    });
+    // initiate_checkout se registra al entrar a la página de checkout (una sola vez por visita).
     navigate({ name: "checkout", id: p.id, booking: { range, guests } });
   }
 
