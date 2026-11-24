@@ -106,8 +106,16 @@ function seoPages() {
         image: '/images/og-home.jpg',
       }))
 
+      // Landing de temporada (destino de campañas): título e imagen propios al compartir el enlace.
+      write('temporada.html', render({
+        url: '/temporada',
+        title: 'Temporada de fin de año | INNOVARE JM',
+        description: 'Apartamentos frente al mar en Cartagena y Santa Marta y finca en Lago Calima para diciembre y enero. Consulta fechas disponibles y condiciones de temporada.',
+        image: '/images/og-home.jpg',
+      }))
+
       // robots.txt + sitemap.xml (el sitemap necesita URLs absolutas)
-      const urls = ['/', ...PROPERTIES.map(p => `/alojamientos/${p.id}`), '/privacidad']
+      const urls = ['/', '/temporada', ...PROPERTIES.map(p => `/alojamientos/${p.id}`), '/privacidad']
       if (site) {
         write('sitemap.xml', `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.map(u => `  <url><loc>${abs(u)}</loc></url>`).join('\n')}\n</urlset>\n`)
       }

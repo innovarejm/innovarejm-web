@@ -48,6 +48,7 @@ export function parseLocation(loc = window.location) {
   if (parts[0] === "alojamientos" && parts[1] && parts.length === 2) return { name: "property", id: parts[1], booking: parseBooking(q) };
   if (parts[0] === "reservar" && parts[1] && parts.length === 2) return { name: "checkout", id: parts[1], booking: parseBooking(q) };
   if (parts[0] === "privacidad" && parts.length === 1) return { name: "privacy" };
+  if (parts[0] === "temporada" && parts.length === 1) return { name: "season" };
   return { name: "notfound" };
 }
 
@@ -56,6 +57,7 @@ export function routeToUrl(r) {
     case "property": return `/alojamientos/${r.id}${bookingQuery(r.booking)}`;
     case "checkout": return `/reservar/${r.id}${bookingQuery(r.booking)}`;
     case "privacy":  return "/privacidad";
+    case "season":   return "/temporada";
     case "home": {
       const q = bookingQuery(r.booking);
       if (r.dest) return "/" + (q ? q + "&" : "?") + "destino=" + encodeURIComponent(r.dest);

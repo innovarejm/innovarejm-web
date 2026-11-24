@@ -9,6 +9,7 @@ import { initAnalytics, trackPageView } from './analytics';
 
 const PropertyDetail = lazy(() => import('./pages/PropertyDetail').then(m => ({ default: m.PropertyDetail })));
 const Checkout       = lazy(() => import('./pages/Checkout').then(m => ({ default: m.Checkout })));
+const Temporada      = lazy(() => import('./pages/Temporada').then(m => ({ default: m.Temporada })));
 const Privacy        = lazy(() => import('./pages/Privacy').then(m => ({ default: m.Privacy })));
 const NotFound       = lazy(() => import('./pages/Privacy').then(m => ({ default: m.NotFound })));
 
@@ -21,6 +22,7 @@ function pageMeta(route) {
   if (route.name === "property" && p) return [`${p.nombre} · ${p.sector}, ${p.ciudad} | ${SITE}`, `${p.tagline}. ${p.hab} habitaciones, hasta ${p.huespedes} huéspedes. Reserva directo con ${SITE}.`];
   if (route.name === "checkout" && p) return [`Reservar ${p.nombre} | ${SITE}`, DEFAULT_DESC];
   if (route.name === "privacy") return [`Política de tratamiento de datos | ${SITE}`, DEFAULT_DESC];
+  if (route.name === "season") return [`Temporada de fin de año | ${SITE}`, "Apartamentos frente al mar en Cartagena y Santa Marta y finca en Lago Calima para diciembre y enero. Consulta fechas disponibles y condiciones de temporada."];
   if (route.name === "notfound" || (route.id && !p)) return [`Página no encontrada | ${SITE}`, DEFAULT_DESC];
   return [DEFAULT_TITLE, DEFAULT_DESC];
 }
@@ -80,11 +82,13 @@ export function App() {
         {route.name === "property" && <PropertyDetail key={route.id} id={route.id} booking={route.booking} navigate={navigate} />}
         {route.name === "checkout" && <Checkout id={route.id} booking={route.booking} navigate={navigate} />}
         {route.name === "privacy" && <Privacy navigate={navigate} />}
+        {route.name === "season" && <Temporada navigate={navigate} />}
         {route.name === "notfound" && <NotFound navigate={navigate} />}
       </Suspense>
       <Footer navigate={navigate} />
       {/* En el checkout sobra (toda la página ya termina en WhatsApp) y taparía el botón de envío */}
-      {route.name !== "checkout" && <FloatingWA delayOnScroll={route.name === "home"} />}
+      {/* En la landing de temporada tampoco: el tráfico de campañas debe pasar por fechas + formulario (filtro de leads) */}
+      {route.name !== "checkout" && route.name !== "season" && <FloatingWA delayOnScroll={route.name === "home"} />}
     </>
   );
 }

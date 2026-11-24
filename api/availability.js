@@ -14,6 +14,13 @@
  *
  * ICAL_FALLBACK conserva los enlaces que ya estaban en el código para no romper nada
  * mientras se configuran las variables. Cuando estén en Vercel, se puede vaciar.
+ *
+ * Reservas directas (WhatsApp): Airbnb no conoce las reservas que cierra la asesora.
+ * Para que la web no muestre libres esas fechas, se añade una segunda fuente por
+ * alojamiento: ICAL_<ID>_DIRECTO = dirección iCal secreta de un Google Calendar
+ * (Configuración del calendario → "Dirección secreta en formato iCal"), donde la
+ * asesora crea un evento por cada reserva cerrada fuera de Airbnb.
+ * Cualquiera de las dos variables admite varias URL separadas por coma o espacio.
  */
 const PROPERTY_IDS = ['bocagrande-1601', 'bocagrande-1604', 'rodadero-901', 'darien-villa-sonada'];
 
@@ -23,9 +30,31 @@ const ICAL_FALLBACK = {
   'rodadero-901':    'https://www.airbnb.com.co/calendar/ical/666579984263350325.ics?t=55780b643ada408392814083135d81dd',
 };
 
-function icalUrlFor(property) {
+function splitUrls(value) {
+  return String(value || '').split(/[\s,]+/).map(s => s.trim()).filter(s => /^https:\/\//i.test(s));
+}
+
+/** Todas las fuentes iCal del alojamiento: Airbnb (o respaldo) + reservas directas. */
+function icalUrlsFor(property) {
   const envKey = 'ICAL_' + property.toUpperCase().replace(/[^A-Z0-9]/g, '_');
-  return process.env[envKey] || ICAL_FALLBACK[property] || null;
+  const main = splitUrls(process.env[envKey]);
+  const urls = main.length ? main : splitUrls(ICAL_FALLBACK[property]);
+  return [...urls, ...splitUrls(process.env[envKey + '_DIRECTO'])];
+}
+
+async function fetchIcal(url) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 8000);
+  try {
+    const response = await fetch(url, {
+      signal: controller.signal,
+      headers: { 'User-Agent': 'INNOVARE-JM-Website/1.0' },
+    });
+    if (!response.ok) throw new Error(`calendario respondió HTTP ${response.status}`);
+    return parseIcal(await response.text());
+  } finally {
+    clearTimeout(timeout);
+  }
 }
 
 /** Convierte DTSTART/DTEND a YYYY-MM-DD */
@@ -89,40 +118,32 @@ export default async function handler(req, res) {
   if (!PROPERTY_IDS.includes(property)) {
     return res.status(400).json({ error: `Propiedad desconocida: ${property}` });
   }
-  const icalUrl = icalUrlFor(property);
-  if (!icalUrl) {
+  const urls = icalUrlsFor(property);
+  if (!urls.length) {
     // Alojamiento sin calendario configurado: la web muestra "te confirmamos por WhatsApp"
     return res.status(404).json({ error: 'Calendario no configurado', blockedRanges: [] });
   }
 
-  try {
-    // Timeout de 8s para no bloquear la UI
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 8000);
+  // Se consultan todas las fuentes en paralelo; si una falla se usan las demás.
+  const results = await Promise.allSettled(urls.map(fetchIcal));
+  const ok = results.filter(r => r.status === 'fulfilled');
+  const failed = results.length - ok.length;
+  results.forEach(r => { if (r.status === 'rejected') console.error('[availability]', property, r.reason?.message); });
 
-    const response = await fetch(icalUrl, {
-      signal: controller.signal,
-      headers: { 'User-Agent': 'INNOVARE-JM-Website/1.0' },
-    });
-    clearTimeout(timeout);
-
-    if (!response.ok) {
-      throw new Error(`Airbnb respondió con HTTP ${response.status}`);
-    }
-
-    const icsText = await response.text();
-    const blockedRanges = parseIcal(icsText);
-
-    // Cache: 1 hora en Vercel Edge, stale hasta 24h mientras revalida
-    res.setHeader('Cache-Control', 's-maxage=3600, stale-while-revalidate=86400');
-    return res.status(200).json({
-      property,
-      blockedRanges,
-      count: blockedRanges.length,
-      updatedAt: new Date().toISOString(),
-    });
-  } catch (err) {
-    console.error('[availability]', err.message);
-    return res.status(500).json({ error: err.message, blockedRanges: [] });
+  if (!ok.length) {
+    return res.status(500).json({ error: 'No se pudo leer el calendario', blockedRanges: [] });
   }
+
+  const blockedRanges = ok.flatMap(r => r.value).sort((a, b) => a.start.localeCompare(b.start));
+
+  // Cache: 15 min en Vercel Edge (las reservas directas se reflejan rápido), stale hasta 24 h.
+  res.setHeader('Cache-Control', 's-maxage=900, stale-while-revalidate=86400');
+  return res.status(200).json({
+    property,
+    blockedRanges,
+    count: blockedRanges.length,
+    sources: urls.length,
+    partial: failed > 0,
+    updatedAt: new Date().toISOString(),
+  });
 }

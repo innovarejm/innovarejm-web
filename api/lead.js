@@ -36,6 +36,17 @@ function pickFields(body) {
   return out;
 }
 
+// Misma regla que src/utils/helpers.js: E.164, +57 para celulares colombianos sin indicativo.
+// Sin esto, "300 123 4567" no se une con el chat de WhatsApp de la misma persona en el CRM.
+function normalizePhone(raw) {
+  const s = String(raw || "").trim();
+  let digits = s.replace(/\D/g, "");
+  if (!digits) return "";
+  if (!s.startsWith("+") && digits.startsWith("00")) digits = digits.slice(2);
+  else if (!s.startsWith("+") && digits.length === 10 && digits.startsWith("3")) digits = "57" + digits;
+  return digits.length >= 8 && digits.length <= 15 ? "+" + digits : "";
+}
+
 export default async function handler(req, res) {
   if (req.method === "OPTIONS") return res.status(204).end();
   if (req.method !== "POST") {
@@ -59,6 +70,7 @@ export default async function handler(req, res) {
 
   const payload = pickFields(body);
   payload.source_channel = "web";
+  if (payload.phone) payload.phone = normalizePhone(payload.phone);
 
   if (!payload.first_name || !payload.phone) {
     return res.status(400).json({ error: "Faltan nombre o teléfono" });

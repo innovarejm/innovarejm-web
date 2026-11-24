@@ -8,6 +8,7 @@ import { useAvailability, isRangeAvailable } from '../hooks/useAvailability';
 import { PROPERTIES, AMENIDADES, findProperty, airbnbReviewsUrl, waLink } from '../data/properties';
 import { track } from '../analytics';
 import { formatCOP, nightsBetween, fmtFecha, calcSubtotal, huespedesTxt } from '../utils/helpers';
+import { periodoPara, minNochesPara } from '../data/temporada';
 import { routeToUrl, replaceUrl } from '../router';
 import { NotFound } from './Privacy';
 
@@ -150,7 +151,8 @@ function BookingWidget({ p, navigate, range, setRange, guests, setGuests, openSi
   const { blockedRanges, loading: loadingAvail, error: availError } = useAvailability(p.id);
 
   const nights = nightsBetween(range.start, range.end);
-  const { subtotal, rows: priceRows } = calcSubtotal(range.start, range.end, p.precio, p.precioFinde);
+  const { subtotal, rows: priceRows } = calcSubtotal(range.start, range.end, p.precio, p.precioFinde, (d) => periodoPara(p.id, d));
+  const minNoches = minNochesPara(p.id, range.start);
   const total = subtotal;
   const totalG = guests.adultos + guests.ninos;
   // Sin precio fijo → el flujo es cotizar por WhatsApp en lugar de ir al checkout
@@ -179,6 +181,10 @@ function BookingWidget({ p, navigate, range, setRange, guests, setGuests, openSi
 
   function reservar() {
     if (!nights) { setOpenCal(true); setOpenG(false); return; }
+    if (nights < minNoches) {
+      setNotice(`Para esas fechas la estadía mínima es de ${minNoches} noches.`);
+      setOpenCal(true); setOpenG(false); return;
+    }
     // initiate_checkout se registra al entrar a la página de checkout (una sola vez por visita).
     navigate({ name: "checkout", id: p.id, booking: { range, guests } });
   }
@@ -266,12 +272,10 @@ function BookingWidget({ p, navigate, range, setRange, guests, setGuests, openSi
         )}
       </div>
 
-      {!quote && (
-        <button className="btn btn-primary" style={{ width: "100%", justifyContent: "center", marginTop: 14, height: 54, fontSize: 16 }} onClick={reservar}>
-          {nights ? "Reservar" : "Comprobar disponibilidad"}
-        </button>
-      )}
-      <a className="btn btn-wa" style={{ width: "100%", justifyContent: "center", marginTop: quote ? 14 : 10, height: quote ? 54 : 50, fontSize: quote ? 16 : undefined }}
+      <button className="btn btn-primary" style={{ width: "100%", justifyContent: "center", marginTop: 14, height: 54, fontSize: 16 }} onClick={reservar}>
+        {!nights ? "Comprobar disponibilidad" : quote ? "Solicitar cotización" : "Reservar"}
+      </button>
+      <a className="btn btn-wa" style={{ width: "100%", justifyContent: "center", marginTop: 10, height: 50 }}
         href={waLink(waMsg)}
         target="_blank" rel="noopener noreferrer">
         <Icon name="wa" size={18} /> {quote ? "Cotizar por WhatsApp" : "Consultar por WhatsApp"}
@@ -287,8 +291,9 @@ function BookingWidget({ p, navigate, range, setRange, guests, setGuests, openSi
             <PriceRow key={i} l={`${formatCOP(r.price)} × ${r.count} noche${r.count > 1 ? "s" : ""}${r.label ? ` (${r.label})` : ""}`} r={formatCOP(r.price * r.count)} />
           ))}
           <div style={{ borderTop: "1px solid var(--line)", paddingTop: 14, display: "flex", justifyContent: "space-between", fontWeight: 700, fontSize: 16.5 }}>
-            <span>Total</span><span>{formatCOP(total)}</span>
+            <span>Total estimado</span><span>{formatCOP(total)}</span>
           </div>
+          <p style={{ fontSize: 12.5, color: "var(--muted)" }}>Tarifa de referencia. Tu asesora confirma el valor final por WhatsApp.</p>
         </div>
       ) : (
         <p style={{ marginTop: 16, textAlign: "center", fontSize: 13.5, color: "var(--muted)" }}>

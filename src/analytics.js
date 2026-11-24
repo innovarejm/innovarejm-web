@@ -23,6 +23,8 @@ export function captureAttribution() {
       const value = params.get(key);
       if (value && !stored[key]) { stored[key] = value; changed = true; }
     }
+    // Página de entrada de la sesión (ej. /temporada): dice qué landing trajo el lead.
+    if (!stored.landing) { stored.landing = window.location.pathname; changed = true; }
     if (changed) sessionStorage.setItem(ATTR_KEY, JSON.stringify(stored));
   } catch {
     // sessionStorage puede fallar en modo privado; no bloquear la página.

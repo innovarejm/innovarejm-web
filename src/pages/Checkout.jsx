@@ -3,13 +3,26 @@ import { Icon } from '../icons/Icon';
 import { PropImage } from '../components/PropImage';
 import { useAvailability, isRangeAvailable } from '../hooks/useAvailability';
 import { findProperty, waLink } from '../data/properties';
-import { formatCOP, nightsBetween, fmtFecha, calcSubtotal, huespedesTxt, toISODate } from '../utils/helpers';
+import { formatCOP, nightsBetween, fmtFecha, calcSubtotal, huespedesTxt, toISODate, normalizePhone, leadRef } from '../utils/helpers';
+import { periodoPara, minNochesPara } from '../data/temporada';
 import { routeToUrl } from '../router';
 import { track, trackLead, setUserData, getAttribution } from '../analytics';
 import { NotFound } from './Privacy';
 
 const DEFAULT_GUESTS = { adultos: 2, ninos: 0, bebes: 0 };
-const telOk = (t) => t.replace(/\D/g, "").length >= 7;
+const telOk = (t) => !!normalizePhone(t);
+
+/* Pregunta filtro: separa a quien está listo para apartar de quien solo compara precios.
+   Se guarda en el CRM (metadata.interes) y llega en el mensaje de WhatsApp. */
+const INTERES = [
+  { k: "listo",      t: "Tengo fechas definidas y quiero apartar" },
+  { k: "comparando", t: "Tengo fechas, estoy comparando opciones" },
+  { k: "explorando", t: "Aún no tengo fechas, quiero conocer precios" },
+];
+
+function newEventId() {
+  return window.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+}
 const emailOk = (e) => !e.trim() || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e.trim());
 
 function Panel({ n, t, children }) {
@@ -130,14 +143,20 @@ export function Checkout({ id, booking, navigate }) {
   const totalG = guests.adultos + guests.ninos;
 
   const [done, setDone] = useState(false);
-  const [form, setForm] = useState({ nombre: "", email: "", tel: "", acepta: false });
+  const [form, setForm] = useState({ nombre: "", email: "", tel: "", interes: "", acepta: false });
   const [showErrors, setShowErrors] = useState(false);
   const sentRef = useRef(false);
+  // Un id por visita: deduplica el Lead (píxel/CAPI) y da el código que ve la asesora.
+  const [eventId] = useState(newEventId);
+  const ref = leadRef(eventId);
   const { blockedRanges, loading: loadingAvail } = useAvailability(p?.id || null);
 
-  const { subtotal, rows: priceRows } = calcSubtotal(start, end, p?.precio ?? 0, p?.precioFinde);
-  const aseo = p?.aseo || 0;
-  const total = subtotal + aseo;
+  const { subtotal, rows: priceRows } = calcSubtotal(start, end, p?.precio ?? 0, p?.precioFinde, p ? (d) => periodoPara(p.id, d) : undefined);
+  const minNoches = p ? minNochesPara(p.id, start) : 1;
+  // Sin precio fijo (finca): igual se capturan los datos y el lead llega al CRM; el valor lo cotiza la asesora.
+  const quote = !p?.precio;
+  const aseo = quote ? 0 : (p?.aseo || 0);
+  const total = quote ? 0 : subtotal + aseo;
 
   useEffect(() => { window.scrollTo({ top: 0, behavior: "instant" }); }, [done]);
 
@@ -164,6 +183,7 @@ export function Checkout({ id, booking, navigate }) {
     nombre: !form.nombre.trim() && "Escribe tu nombre.",
     tel: !telOk(form.tel) && "Escribe un teléfono válido (con indicativo si no es de Colombia).",
     email: !emailOk(form.email) && "Revisa el correo.",
+    interes: !form.interes && "Cuéntanos en qué punto está tu viaje.",
     acepta: !form.acepta && "Debes aceptar la política de datos para continuar.",
   };
   const valid = !Object.values(errors).some(Boolean);
@@ -174,15 +194,17 @@ export function Checkout({ id, booking, navigate }) {
     ? `\n• Origen: ${sessionAttr.utm_source}${sessionAttr.utm_campaign ? ` / ${sessionAttr.utm_campaign}` : ""}`
     : "";
 
-  const waMsg = `Hola INNOVARE JM 👋, quiero reservar:
+  const interesTxt = INTERES.find(o => o.k === form.interes)?.t;
+  const waMsg = `Hola INNOVARE JM 👋, quiero ${quote ? "cotizar" : "reservar"}:
 • ${p.nombre} (${p.sector}, ${p.ciudad})
 • ${fmtFecha(start)} → ${fmtFecha(end)} · ${nights} noche${nights > 1 ? "s" : ""}
 • ${huespedesTxt(guests)}
-• Total estimado: ${formatCOP(total)}
+• ${quote ? "Valor: a cotizar según el grupo" : `Total estimado web: ${formatCOP(total)}`}${interesTxt ? `\n• ${interesTxt}` : ""}
 
 Mis datos:
 • Nombre: ${form.nombre.trim()}
-• Teléfono: ${form.tel.trim()}${form.email.trim() ? `\n• Correo: ${form.email.trim()}` : ""}${sourceLine}`;
+• Teléfono: ${form.tel.trim()}${form.email.trim() ? `\n• Correo: ${form.email.trim()}` : ""}${sourceLine}
+• Código de solicitud: ${ref}`;
 
   function handleSend(e) {
     if (!valid) { e.preventDefault(); setShowErrors(true); return; }
@@ -192,7 +214,6 @@ Mis datos:
     const parts = form.nombre.trim().split(/\s+/);
     const firstName = parts[0] || "Prospecto";
     const lastName = parts.slice(1).join(" ") || "-";
-    const eventId = window.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(16).slice(2)}`;
 
     // Señal de conversión con datos de contacto (Meta hace el hash en el navegador).
     setUserData({ email: form.email, phone: form.tel, firstName, lastName });
@@ -213,7 +234,7 @@ Mis datos:
       first_name: firstName,
       last_name: lastName,
       email: form.email.trim() || undefined,
-      phone: form.tel.trim(),
+      phone: normalizePhone(form.tel),
       source_channel: "web",
       event_id: eventId,
       consent_given: true,
@@ -227,7 +248,7 @@ Mis datos:
       adults: guests.adultos,
       children: guests.ninos,
       infants: guests.bebes,
-      estimated_value: total,
+      estimated_value: total || undefined,
       utm_source: attr.utm_source,
       utm_medium: attr.utm_medium,
       utm_campaign: attr.utm_campaign,
@@ -236,7 +257,14 @@ Mis datos:
       fbclid: attr.fbclid,
       fbc: attr.fbc,
       fbp: attr.fbp,
-      metadata: { property_id: p.id, page: window.location.href },
+      metadata: {
+        property_id: p.id,
+        page: window.location.href,
+        landing: attr.landing || null,
+        lead_ref: ref,
+        interes: form.interes,
+        precio_referencia: true,
+      },
     };
     fetch("/api/lead", {
       method: "POST",
@@ -250,7 +278,7 @@ Mis datos:
 
   // Casos en que no se puede reservar desde esta página (enlaces viejos, sin fechas, sin precio fijo)
   let blocker = null;
-  if (!p.precio) {
+  if (quote && !nights) {
     blocker = (
       <Notice icon="wa" title="Este alojamiento se cotiza por WhatsApp"
         actions={<>
@@ -268,6 +296,13 @@ Mis datos:
       <Notice title="Elige tus fechas"
         actions={<button className="btn btn-primary" onClick={backToProperty}>Elegir fechas</button>}>
         Para continuar con la reserva necesitamos las fechas de llegada y salida.
+      </Notice>
+    );
+  } else if (nights < minNoches) {
+    blocker = (
+      <Notice title={`Estadía mínima de ${minNoches} noches`}
+        actions={<button className="btn btn-primary" onClick={backToProperty}>Cambiar fechas</button>}>
+        Para llegadas del {fmtFecha(start)} la estadía mínima en {p.nombre} es de {minNoches} noches. Elige otra fecha de salida.
       </Notice>
     );
   } else if (conflict) {
@@ -318,7 +353,23 @@ Mis datos:
                 {err("acepta") && <p style={{ fontSize: 12.5, color: "#b54848", marginTop: 6 }}>{err("acepta")}</p>}
               </Panel>
 
-              <Panel n="2" t="¿Cómo quieres continuar?">
+              <Panel n="2" t="¿En qué punto está tu viaje?">
+                <div role="radiogroup" aria-label="¿En qué punto está tu viaje?" style={{ display: "grid", gap: 10 }}>
+                  {INTERES.map(o => (
+                    <label key={o.k} style={{ display: "flex", gap: 12, alignItems: "center", padding: "13px 15px", borderRadius: 12, cursor: "pointer",
+                      border: "1.5px solid " + (form.interes === o.k ? "var(--blue)" : "var(--line-strong)"),
+                      background: form.interes === o.k ? "rgba(43,168,224,.06)" : "#fff", fontSize: 14.5 }}>
+                      <input type="radio" name="interes" value={o.k} checked={form.interes === o.k}
+                        onChange={() => setForm({ ...form, interes: o.k })}
+                        style={{ width: 18, height: 18, accentColor: "var(--blue)", flexShrink: 0 }} />
+                      {o.t}
+                    </label>
+                  ))}
+                </div>
+                {err("interes") && <p style={{ fontSize: 12.5, color: "#b54848", marginTop: 8 }}>{err("interes")}</p>}
+              </Panel>
+
+              <Panel n="3" t="¿Cómo quieres continuar?">
                 <div style={{ display: "grid", gap: 12 }}>
                   <MethodOption active icon="wa" title="Reservar por WhatsApp"
                     desc="Te confirmamos disponibilidad y coordinamos el pago contigo. Recomendado." badge="Más rápido" />
@@ -353,17 +404,23 @@ Mis datos:
                   <SumRow l="Huéspedes" r={huespedesTxt(guests)} />
                   <SumRow l="Noches" r={nights} />
                 </div>
+                {quote ? (
+                  <p style={{ paddingTop: 18, fontSize: 14.5, color: "var(--ink-2)" }}>
+                    El valor depende del número de personas y de los servicios adicionales. Te enviamos la cotización por WhatsApp.
+                  </p>
+                ) : (
                 <div style={{ paddingTop: 18, display: "grid", gap: 11, fontSize: 14.5 }}>
                   {priceRows.map((r, i) => (
                     <PriceRow key={i} l={`${formatCOP(r.price)} × ${r.count} noche${r.count > 1 ? "s" : ""}${r.label ? ` (${r.label})` : ""}`} r={formatCOP(r.price * r.count)} />
                   ))}
                   {aseo > 0 && <PriceRow l="Tarifa de limpieza" r={formatCOP(aseo)} />}
                   <div style={{ borderTop: "1px solid var(--line)", paddingTop: 13, display: "flex", justifyContent: "space-between", fontWeight: 700, fontSize: 17 }}>
-                    <span>Total</span><span>{formatCOP(total)}</span>
+                    <span>Total estimado</span><span>{formatCOP(total)}</span>
                   </div>
                 </div>
+                )}
                 <p style={{ fontSize: 12, color: "var(--muted)", marginTop: 14, display: "flex", gap: 7, alignItems: "flex-start" }}>
-                  <Icon name="shield" size={15} style={{ flexShrink: 0, marginTop: 1 }} /> Aún no se realizará ningún cobro. Confirmamos disponibilidad antes de pagar.
+                  <Icon name="shield" size={15} style={{ flexShrink: 0, marginTop: 1 }} /> Tarifa de referencia: tu asesora confirma el valor final y la disponibilidad por WhatsApp antes de cualquier pago.
                 </p>
               </div>
             </aside>
