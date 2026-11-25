@@ -3,6 +3,7 @@ import react from '@vitejs/plugin-react'
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs'
 import path from 'node:path'
 import { PROPERTIES, DESTINOS, CONTACT } from './src/data/properties.js'
+import { TEMPORADA } from './src/data/temporada.js'
 
 /*
  * SEO: después del build escribe una página HTML por alojamiento (y /privacidad) con su
@@ -107,15 +108,18 @@ function seoPages() {
       }))
 
       // Landing de temporada (destino de campañas): título e imagen propios al compartir el enlace.
-      write('temporada.html', render({
+      // Mientras las condiciones no estén confirmadas: noindex y fuera del sitemap (solo se comparte el enlace).
+      let temporadaHtml = render({
         url: '/temporada',
         title: 'Temporada de fin de año | INNOVARE JM',
         description: 'Apartamentos frente al mar en Cartagena y Santa Marta y finca en Lago Calima para diciembre y enero. Consulta fechas disponibles y condiciones de temporada.',
         image: '/images/og-home.jpg',
-      }))
+      })
+      if (!TEMPORADA.confirmado) temporadaHtml = temporadaHtml.replace('</head>', '  <meta name="robots" content="noindex" />\n  </head>')
+      write('temporada.html', temporadaHtml)
 
       // robots.txt + sitemap.xml (el sitemap necesita URLs absolutas)
-      const urls = ['/', '/temporada', ...PROPERTIES.map(p => `/alojamientos/${p.id}`), '/privacidad']
+      const urls = ['/', ...(TEMPORADA.confirmado ? ['/temporada'] : []), ...PROPERTIES.map(p => `/alojamientos/${p.id}`), '/privacidad']
       if (site) {
         write('sitemap.xml', `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.map(u => `  <url><loc>${abs(u)}</loc></url>`).join('\n')}\n</urlset>\n`)
       }
