@@ -73,15 +73,52 @@ function BookingPanel({ p, navigate }) {
   );
 }
 
+/* Carrusel de fotos de la ficha: flechas, contador, miniaturas y deslizamiento táctil. */
+function Gallery({ p }) {
+  const fotos = p.galeria;
+  const [i, setI] = useState(0);
+  const [touchX, setTouchX] = useState(null);
+  const go = (d) => setI((x) => (x + d + fotos.length) % fotos.length);
+
+  return (
+    <div className="tp-gal">
+      <div className="tp-gal-main"
+        onTouchStart={(e) => setTouchX(e.touches[0].clientX)}
+        onTouchEnd={(e) => {
+          if (touchX === null) return;
+          const dx = e.changedTouches[0].clientX - touchX;
+          if (Math.abs(dx) > 40) go(dx < 0 ? 1 : -1);
+          setTouchX(null);
+        }}>
+        <PropImage key={fotos[i]} src={fotos[i]} alt={`${p.nombre}, foto ${i + 1} de ${fotos.length}`}
+          sizes="(max-width: 860px) 100vw, 460px" style={{ position: "absolute", inset: 0 }} />
+        <button className="tp-gal-nav" style={{ left: 10 }} onClick={() => go(-1)} aria-label="Foto anterior">
+          <Icon name="chevL" size={18} />
+        </button>
+        <button className="tp-gal-nav" style={{ right: 10 }} onClick={() => go(1)} aria-label="Foto siguiente">
+          <Icon name="chevR" size={18} />
+        </button>
+        <span className="tp-gal-count">{i + 1} / {fotos.length}</span>
+      </div>
+      <div className="tp-gal-thumbs" role="tablist" aria-label={`Fotos de ${p.nombre}`}>
+        {fotos.map((src, k) => (
+          <button key={src} role="tab" aria-selected={k === i} aria-label={`Ver foto ${k + 1}`}
+            className={"tp-gal-thumb" + (k === i ? " on" : "")} onClick={() => setI(k)}>
+            <PropImage src={src} alt="" sizes="80px" style={{ position: "absolute", inset: 0 }} />
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function SeasonCard({ p, navigate, open, onToggle }) {
   const desde = tarifaDesde(p);
   const amen = p.amenities.slice(0, 6).map(k => AMENIDADES[k]).filter(Boolean);
   return (
     <article className="tp-card" id={`t-${p.id}`}>
       <div className="tp-card-top">
-        <div className="tp-card-img">
-          <PropImage src={p.galeria[0]} alt={p.nombre} sizes="(max-width: 860px) 100vw, 420px" />
-        </div>
+        <Gallery p={p} />
         <div className="tp-card-body">
           <p className="eyebrow">{p.sector} · {p.ciudad}</p>
           <h3 className="tp-card-title">{p.nombre}</h3>
@@ -240,8 +277,19 @@ export function Temporada({ navigate }) {
 
         .tp-list{ display: grid; gap: 22px; padding-bottom: 90px; }
         .tp-card{ background: #fff; border: 1px solid var(--line); border-radius: 22px; overflow: hidden; box-shadow: var(--sh-sm); }
-        .tp-card-top{ display: grid; grid-template-columns: 420px 1fr; }
-        .tp-card-img{ position: relative; min-height: 300px; }
+        .tp-card-top{ display: grid; grid-template-columns: 460px 1fr; }
+        .tp-gal{ display: flex; flex-direction: column; background: var(--navy); min-width: 0; }
+        .tp-gal-main{ position: relative; flex: 1; min-height: 300px; overflow: hidden; touch-action: pan-y; }
+        .tp-gal-nav{ position: absolute; top: 50%; transform: translateY(-50%); width: 38px; height: 38px; border-radius: 99px;
+          background: rgba(255,255,255,.92); color: var(--ink); display: grid; place-items: center; box-shadow: var(--sh-sm); z-index: 2; }
+        .tp-gal-nav:hover{ background: #fff; }
+        .tp-gal-count{ position: absolute; right: 12px; bottom: 12px; z-index: 2; font-family: var(--mono); font-size: 12px; color: #fff;
+          background: rgba(12,38,56,.7); border-radius: 99px; padding: 4px 10px; }
+        .tp-gal-thumbs{ display: flex; gap: 6px; padding: 8px; overflow-x: auto; scrollbar-width: thin; }
+        .tp-gal-thumb{ position: relative; flex: 0 0 64px; height: 48px; border-radius: 7px; overflow: hidden; opacity: .55;
+          outline: 2px solid transparent; transition: opacity .15s, outline-color .15s; }
+        .tp-gal-thumb.on{ opacity: 1; outline-color: var(--cyan); }
+        .tp-gal-thumb:hover{ opacity: .9; }
         .tp-card-body{ padding: 26px 28px; }
         .tp-card-title{ font-size: 24px; font-weight: 700; margin-top: 6px; }
         .tp-card-tag{ color: var(--muted); font-size: 15px; margin-top: 4px; }
@@ -268,7 +316,7 @@ export function Temporada({ navigate }) {
         @media (max-width: 860px){
           .tp-steps{ grid-template-columns: 1fr; margin-top: 18px; }
           .tp-card-top{ grid-template-columns: 1fr; }
-          .tp-card-img{ min-height: 220px; }
+          .tp-gal-main{ min-height: 240px; }
           .tp-card-body{ padding: 20px 18px; }
           .tp-panel{ padding: 20px 16px; }
           .tp-panel-grid{ grid-template-columns: 1fr; gap: 22px; }

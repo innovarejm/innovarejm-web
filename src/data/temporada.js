@@ -27,13 +27,17 @@ export const TEMPORADA = {
   // Fecha límite para apartar con las condiciones de temporada (texto libre).
   cierre: "15 de diciembre de 2026",
   condiciones: [
-    { icon: "cal",    t: "Estadía mínima",        d: "3 noches entre el 15 de diciembre y el 15 de enero." },
+    // 2 noches: indicado por el usuario el 2026-11-24, pendiente de confirmación de Melisa.
+    { icon: "cal",    t: "Estadía mínima",        d: "2 noches para llegadas entre el 15 de diciembre y el 15 de enero." },
     { icon: "shield", t: "Aparta tus fechas",      d: "Con un anticipo de $100.000. El saldo se paga antes del ingreso." },
     { icon: "key",    t: "Reprogramación",         d: "Puedes mover tus fechas una vez, sujeto a disponibilidad. El anticipo no es reembolsable." },
     { icon: "users",  t: "Capacidad exacta",       d: "Cada alojamiento recibe hasta el número de huéspedes indicado, incluidos niños." },
     { icon: "wa",     t: "Precio final por WhatsApp", d: "La web muestra la tarifa de referencia. Tu asesora confirma el valor final según fechas y grupo." },
   ],
   noIncluye: ["Alimentación", "Transporte", "Tours y actividades", "Huéspedes adicionales a la capacidad"],
+  // Regla general de estadía mínima para todos los alojamientos (pendiente de confirmar fechas con Melisa).
+  // `hasta` excluido. Un periodo de TARIFAS con su propio minNoches tiene prioridad.
+  estadiaMinima: { desde: "2026-12-15", hasta: "2027-01-16", minNoches: 2 },
 };
 
 export const TARIFAS = {
@@ -60,5 +64,9 @@ export function periodoPara(propertyId, date) {
 /** Estadía mínima para una llegada en `start` (1 si no hay regla). */
 export function minNochesPara(propertyId, start) {
   if (!start) return 1;
-  return periodoPara(propertyId, start)?.minNoches || 1;
+  const propio = periodoPara(propertyId, start)?.minNoches;
+  if (propio) return propio;
+  const g = TEMPORADA.estadiaMinima;
+  const k = dayKey(start);
+  return g && k >= g.desde && k < g.hasta ? g.minNoches : 1;
 }
